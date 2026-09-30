@@ -14,7 +14,9 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    db: { schema: "Ceylon_gems" },
+  });
 
   let triggerSource = "cron";
   let triggerCorrelationId = "";
@@ -293,7 +295,7 @@ async function processMessage(
 
   let aiResponse: Response;
   try {
-    aiResponse = await fetch(`${supabaseUrl}/functions/v1/ai-chat`, {
+    aiResponse = await fetch(`${supabaseUrl}/functions/v1/ai-chat-Ceylon_gems`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${supabaseServiceKey}`,
@@ -371,18 +373,38 @@ async function processMessage(
     await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, replyVideoUrl, sessionApiKey);
   }
 
-  // Send image(s) next if present
-  for (const url of replyImageUrls) {
-    await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, url, sessionApiKey);
+  // Send image(s) next if present (one by one with a short delay)
+  for (let imgIdx = 0; imgIdx < replyImageUrls.length; imgIdx++) {
+    await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, replyImageUrls[imgIdx], sessionApiKey);
+    if (imgIdx < replyImageUrls.length - 1) {
+      await new Promise((r) => setTimeout(r, 600));
+    }
   }
 
   // Send FAQ attachments (images / videos / PDFs) with no caption, before the text reply
-  for (const url of faqMedia) {
-    await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, url, sessionApiKey);
+  for (let faqIdx = 0; faqIdx < faqMedia.length; faqIdx++) {
+    await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, faqMedia[faqIdx], sessionApiKey);
+    if (faqIdx < faqMedia.length - 1) {
+      await new Promise((r) => setTimeout(r, 600));
+    }
   }
 
-  // Send text message last
-  await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, replyMessage, null, sessionApiKey);
+  // Send text message (split into short conversational bubbles if multi-paragraph)
+  const textBubbles = (replyMessage || "")
+    .split(/\n{2,}/)
+    .map((b: string) => b.trim())
+    .filter((b: string) => b.length > 0);
+
+  if (textBubbles.length > 1 && textBubbles.length <= 4) {
+    for (let bIdx = 0; bIdx < textBubbles.length; bIdx++) {
+      await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, textBubbles[bIdx], null, sessionApiKey);
+      if (bIdx < textBubbles.length - 1) {
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
+  } else {
+    await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, replyMessage, null, sessionApiKey);
+  }
 
   // Send order follow-up message if present
   if (followupMessage) {
@@ -445,7 +467,11 @@ async function handleWelcomeMessage(
     for (const seqItem of welcomeSequence) {
       if (seqItem.type === "text" && welcomeText.trim()) {
         console.log(`[${corrId}] Sending welcome text (sequence)`);
-        await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, welcomeText, null, sessionApiKey);
+        const wBubbles = welcomeText.split(/\n{2,}/).map((b: string) => b.trim()).filter(Boolean);
+        for (let wIdx = 0; wIdx < wBubbles.length; wIdx++) {
+          await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, wBubbles[wIdx], null, sessionApiKey);
+          if (wIdx < wBubbles.length - 1) await new Promise(r => setTimeout(r, 600));
+        }
       } else if (seqItem.type === "media" && seqItem.url) {
         console.log(`[${corrId}] Sending welcome media (sequence): ${seqItem.url.substring(0, 80)}`);
         await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, seqItem.url, sessionApiKey);
@@ -453,7 +479,11 @@ async function handleWelcomeMessage(
     }
   } else {
     if (welcomeText.trim()) {
-      await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, welcomeText, null, sessionApiKey);
+      const wBubbles = welcomeText.split(/\n{2,}/).map((b: string) => b.trim()).filter(Boolean);
+      for (let wIdx = 0; wIdx < wBubbles.length; wIdx++) {
+        await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, wBubbles[wIdx], null, sessionApiKey);
+        if (wIdx < wBubbles.length - 1) await new Promise(r => setTimeout(r, 600));
+      }
     }
     for (const mediaUrl of welcomeMediaUrls) {
       await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, mediaUrl, sessionApiKey);
@@ -488,7 +518,7 @@ async function sendWhatsApp(
   const body: any = { to, message, sessionApiKey };
   if (imageUrl) body.imageUrl = imageUrl;
 
-  const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+  const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${supabaseServiceKey}`,
@@ -513,7 +543,7 @@ async function sendWhatsAppMedia(
   mediaUrl: string,
   sessionApiKey: string
 ) {
-  const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+  const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${supabaseServiceKey}`,
@@ -687,7 +717,7 @@ async function maybeNotifyQualifiedLead(
       sendApiKey = sessionData?.session_api_key || null;
     }
 
-    const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${supabaseServiceKey}`,

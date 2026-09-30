@@ -15,8 +15,43 @@ services:
       WAHA_BASE_URL: ${WAHA_BASE_URL}
       WAHA_API_KEY: ${WAHA_API_KEY}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_REGION: ${MINIO_REGION}
-      FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
-      WEBHOOK_URL_OVERRIDE: "https://regards-translate-adventures-pine.trycloudflare.com/functions/v1/webhook-wsender"
+      WEBHOOK_URL_OVERRIDE: "https://pumps-thompson-inn-concerning.trycloudflare.com/functions/v1/webhook-wsender-Ceylon_gems"
+
+  minio:
+    container_name: minio
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --address ":9002" --console-address ":9001"
+    ports:
+      - "9000:9002"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-ceylon_minio_admin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-ceylon_minio_secret_2026}
+    volumes:
+      - ./volumes/minio:/data:z
+
+  waha:
+    container_name: waha
+    image: devlikeapro/waha
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - WAHA_ZIP_LOGS=true
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
+      - WAHA_DASHBOARD_ENABLED=true
+      - WAHA_PRINT_QR=true
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME:-admin}
+      - WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD:-admin123}
+      - WHATSAPP_SWAGGER_USERNAME=${WAHA_DASHBOARD_USERNAME:-admin}
+      - WHATSAPP_SWAGGER_PASSWORD=${WAHA_DASHBOARD_PASSWORD:-admin123}
+      - WHATSAPP_HOOK_URL=http://supabase-envoy:8000/functions/v1/webhook-wsender-Ceylon_gems
+      - WHATSAPP_HOOK_EVENTS=message,message.any,session.status
+    volumes:
+      - ./volumes/waha:/app/.sessions:z

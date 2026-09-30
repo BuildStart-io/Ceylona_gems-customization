@@ -80,8 +80,30 @@ serve(async (req) => {
     let res: Response;
 
     if (url) {
-      const fileName = filenameFromUrl(url);
-      const file = { url, filename: fileName, mimetype: undefined as string | undefined };
+      let resolvedUrl = url;
+      if (resolvedUrl.includes("localhost:9000")) {
+        resolvedUrl = resolvedUrl.replace("localhost:9000", "minio:9002");
+      }
+      if (resolvedUrl.includes("127.0.0.1:9000")) {
+        resolvedUrl = resolvedUrl.replace("127.0.0.1:9000", "minio:9002");
+      }
+
+      let fileName = filenameFromUrl(resolvedUrl);
+      let mimetype: string | undefined = undefined;
+
+      if (detectedType === "image") {
+        if (!/\.(jpg|jpeg|png|webp|gif)$/i.test(fileName)) {
+          fileName = `${fileName}.jpg`;
+        }
+        if (fileName.toLowerCase().endsWith(".png")) mimetype = "image/png";
+        else if (fileName.toLowerCase().endsWith(".webp")) mimetype = "image/webp";
+        else mimetype = "image/jpeg";
+      } else if (detectedType === "video") {
+        if (!/\.(mp4|mov|avi|webm)$/i.test(fileName)) fileName = `${fileName}.mp4`;
+        mimetype = "video/mp4";
+      }
+
+      const file = { url: resolvedUrl, filename: fileName, mimetype };
       const caption = message || "";
 
       switch (detectedType) {

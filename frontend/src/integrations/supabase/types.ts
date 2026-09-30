@@ -12,7 +12,7 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
-  public: {
+  Ceylon_gems: {
     Tables: {
       ai_usage_logs: {
         Row: {
@@ -233,6 +233,7 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           customer_name: string | null
+          custom_fields: Json | null
           id: string
           phone_number: string
           status: string
@@ -243,6 +244,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           customer_name?: string | null
+          custom_fields?: Json | null
           id?: string
           phone_number: string
           status?: string
@@ -253,6 +255,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           customer_name?: string | null
+          custom_fields?: Json | null
           id?: string
           phone_number?: string
           status?: string
@@ -663,11 +666,12 @@ export type Database = {
       [_ in never]: never
     }
   }
+  public: Database["Ceylon_gems"]
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "Ceylon_gems">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
@@ -783,6 +787,12 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  Ceylon_gems: {
+    Enums: {
+      app_role: ["super_admin", "business_user"],
+      plan_tier: ["free", "pro", "enterprise"],
+    },
+  },
   public: {
     Enums: {
       app_role: ["super_admin", "business_user"],

@@ -22,10 +22,11 @@ import {
   Trash2,
   Crosshair,
   Mic,
+  Sparkles,
 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Message {
@@ -68,6 +69,47 @@ export default function Conversations() {
   const { user } = useAuth();
   const { effectiveUserId } = useStaffAccess();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [qualifiedLeads, setQualifiedLeads] = useState<Map<string, any>>(new Map());
+
+  // Fetch qualified leads from orders
+  const fetchQualifiedLeads = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("orders")
+        .select("id, customer_name, customer_phone, whatsapp_phone, total_amount, special_instructions, order_items, created_at")
+        .eq("status", "qualified_lead")
+        .order("created_at", { ascending: false });
+
+      if (data) {
+        const leadMap = new Map<string, any>();
+        for (const order of data) {
+          const phones = [order.customer_phone, order.whatsapp_phone].filter(Boolean);
+          for (const rawPhone of phones) {
+            const clean = rawPhone!.replace(/\D/g, "");
+            if (clean && !leadMap.has(clean)) {
+              let leadDetails: any = null;
+              if (Array.isArray(order.order_items) && (order.order_items as any[])[0]?.lead_details) {
+                leadDetails = (order.order_items as any[])[0].lead_details;
+              }
+              leadMap.set(clean, {
+                orderId: order.id,
+                customerName: order.customer_name,
+                totalAmount: order.total_amount,
+                specialInstructions: order.special_instructions,
+                leadDetails,
+                createdAt: order.created_at,
+              });
+            }
+          }
+        }
+        setQualifiedLeads(leadMap);
+      }
+    } catch (err) {
+      console.error("Error fetching qualified leads:", err);
+    }
+  }, [user]);
 
   // Fetch tracked FAQ usage phones
   const fetchTrackedPhones = useCallback(async () => {
@@ -125,7 +167,8 @@ export default function Conversations() {
   useEffect(() => {
     fetchTakeovers();
     fetchTrackedPhones();
-  }, [fetchTakeovers, fetchTrackedPhones]);
+    fetchQualifiedLeads();
+  }, [fetchTakeovers, fetchTrackedPhones, fetchQualifiedLeads]);
 
   const toggleTakeover = useCallback(async (phoneNumber: string) => {
     if (!user || togglingTakeover) return;
@@ -330,7 +373,7 @@ export default function Conversations() {
       if (sessionError) throw sessionError;
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-whatsapp`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-whatsapp-Ceylon_gems`,
         {
           method: "POST",
           headers: {
@@ -519,10 +562,18 @@ export default function Conversations() {
                                 {formatTime(thread.last_time)}
                               </span>
                             </div>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {thread.phone_number}
-                            </p>
+                            <div className="flex items-center justify-between gap-1 mt-0.5">
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {thread.phone_number}
+                              </p>
+                              {qualifiedLeads.has(thread.phone_number.replace(/\D/g, "")) && (
+                                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800 text-[10px] px-1.5 py-0 font-medium">
+                                  <Sparkles className="h-2.5 w-2.5 mr-0.5 text-amber-500" />
+                                  Lead
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground truncate mt-0.5">
                               {thread.last_message}
                             </p>
@@ -576,6 +627,12 @@ export default function Conversations() {
                           FAQ Tracked
                         </Badge>
                       )}
+                      {qualifiedLeads.has(selectedPhone.replace(/\D/g, "")) && (
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800 text-xs px-2 py-0.5 font-medium gap-1">
+                          <Sparkles className="h-3 w-3 text-amber-500" />
+                          💎 Qualified Lead
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {selectedPhone}
@@ -601,6 +658,44 @@ export default function Conversations() {
                     )}
                   </Button>
                 </div>
+
+                {/* Qualified Lead Context Banner */}
+                {(() => {
+                  const clean = selectedPhone.replace(/\D/g, "");
+                  const lead = qualifiedLeads.get(clean);
+                  if (!lead) return null;
+                  return (
+                    <div className="bg-emerald-50/90 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-800/60 px-4 py-2 flex items-center justify-between text-xs transition-colors">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                          Qualified Lead:
+                        </span>
+                        <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                          {lead.leadDetails?.gemstone_type || lead.leadDetails?.category || "Jewelry Inquiry"}
+                        </span>
+                        {lead.leadDetails?.budget && (
+                          <span className="text-emerald-600 dark:text-emerald-500">
+                            • Budget: {lead.leadDetails.budget}
+                          </span>
+                        )}
+                        {lead.leadDetails?.gift_recipient && (
+                          <span className="text-emerald-600 dark:text-emerald-500">
+                            • For: {lead.leadDetails.gift_recipient}
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 font-medium px-2"
+                        onClick={() => navigate(`/dashboard/orders?phone=${encodeURIComponent(selectedPhone)}&status=qualified_lead`)}
+                      >
+                        View in Orders →
+                      </Button>
+                    </div>
+                  );
+                })()}
 
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">

@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, ShoppingCart, Loader2, Phone, MapPin, CreditCard, Package, MessageSquare, Trash2, Download } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Eye, ShoppingCart, Loader2, Phone, MapPin, CreditCard, Package, MessageSquare, Trash2, Download, Sparkles, ExternalLink } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import LimitWarningBanner from "@/components/LimitWarningBanner";
 
@@ -30,6 +30,7 @@ interface Order {
 }
 
 const statusColors: Record<string, string> = {
+  qualified_lead: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800 font-semibold",
   pending: "bg-yellow-100 text-yellow-800",
   processing: "bg-blue-100 text-blue-800",
   shipped: "bg-purple-100 text-purple-800",
@@ -38,6 +39,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusOptions = [
+  { value: "qualified_lead", label: "🌟 Qualified Lead" },
   { value: "pending", label: "Pending" },
   { value: "processing", label: "Processing" },
   { value: "shipped", label: "Shipped" },
@@ -52,6 +54,15 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Handle URL query parameters for filtering/opening orders
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    if (statusParam && (statusParam === "all" || statusOptions.some((o) => o.value === statusParam))) {
+      setStatusFilter(statusParam);
+    }
+  }, [searchParams]);
 
   const fetchOrders = async () => {
     try {
@@ -68,6 +79,15 @@ export default function Orders() {
 
       if (error) throw error;
       setOrders(data || []);
+      const phoneParam = searchParams.get("phone");
+      if (phoneParam && data && data.length > 0) {
+        const clean = phoneParam.replace(/\D/g, "");
+        const match = data.find((o: any) =>
+          (o.customer_phone && o.customer_phone.replace(/\D/g, "").includes(clean)) ||
+          (o.whatsapp_phone && o.whatsapp_phone.replace(/\D/g, "").includes(clean))
+        );
+        if (match) setSelectedOrder(match);
+      }
     } catch (error: any) {
       toast({
         title: "Error fetching orders",
@@ -178,13 +198,48 @@ export default function Orders() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground hidden sm:inline">Filter:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Button
+                variant={statusFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("all")}
+              >
+                All
+              </Button>
+              <Button
+                variant={statusFilter === "qualified_lead" ? "default" : "outline"}
+                size="sm"
+                className={
+                  statusFilter === "qualified_lead"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                    : "border-emerald-300 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                }
+                onClick={() => setStatusFilter("qualified_lead")}
+              >
+                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-300" />
+                Qualified Leads
+              </Button>
+              <Button
+                variant={statusFilter === "pending" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("pending")}
+              >
+                Pending
+              </Button>
+              <Button
+                variant={statusFilter === "processing" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("processing")}
+              >
+                Processing
+              </Button>
+            </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[140px] sm:w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 {statusOptions.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     {status.label}
@@ -357,6 +412,48 @@ export default function Orders() {
             </DialogHeader>
             {selectedOrder && (
               <div className="space-y-6">
+                {/* Qualified Lead Highlight Banner */}
+                {selectedOrder.status === "qualified_lead" && (
+                  <div className="rounded-xl border-2 border-emerald-400/70 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 dark:from-emerald-950/60 dark:via-teal-950/40 dark:to-emerald-950/60 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        <h3 className="font-semibold text-emerald-900 dark:text-emerald-200">
+                          Ceylona Gems — Qualified Lead
+                        </h3>
+                      </div>
+                      <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">
+                        🌟 Ready for Closing
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90">
+                      This customer has completed AI lead qualification for gemstones / silver jewelry and is waiting for sales confirmation.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => {
+                          const cleanPhone = (selectedOrder.whatsapp_phone || selectedOrder.customer_phone).replace(/\D/g, "");
+                          window.open(`https://wa.me/${cleanPhone}`, "_blank");
+                        }}
+                      >
+                        <Phone className="mr-1.5 h-3.5 w-3.5" />
+                        Chat Directly on WhatsApp
+                        <ExternalLink className="ml-1.5 h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-emerald-300 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/60"
+                        onClick={() => updateOrderStatus(selectedOrder.id, "processing")}
+                      >
+                        Accept & Move to Processing
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Customer Info */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -387,22 +484,27 @@ export default function Orders() {
                     <Package className="h-3 w-3" /> Order Items
                   </h4>
                   <div className="border rounded-lg divide-y">
-                    {(Array.isArray(selectedOrder.order_items) ? selectedOrder.order_items : []).map((item: any, index: number) => (
-                      <div key={index} className="p-3 flex justify-between">
-                        <div>
-                          <p className="font-medium">{item.name}</p>
-                          {item.variations && (
-                            <p className="text-sm text-muted-foreground">
-                              {Object.entries(item.variations).map(([key, value]) => `${key}: ${value}`).join(", ")}
-                            </p>
-                          )}
+                    {(Array.isArray(selectedOrder.order_items) ? selectedOrder.order_items : []).map((item: any, index: number) => {
+                      const itemPrice = item.price > 0 
+                        ? item.price 
+                        : (item.lead_details?.product_price || (typeof item.lead_details?.price === "string" ? parseFloat(item.lead_details.price.replace(/\D/g, "")) : 0) || selectedOrder.total_amount || 0);
+                      return (
+                        <div key={index} className="p-3 flex justify-between">
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            {item.variations && (
+                              <p className="text-sm text-muted-foreground">
+                                {Object.entries(item.variations).map(([key, value]) => `${key}: ${value}`).join(", ")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">LKR {itemPrice.toLocaleString()}</p>
+                            <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">LKR {item.price}</p>
-                          <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -418,14 +520,60 @@ export default function Orders() {
                   </div>
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm text-muted-foreground">Total Amount</h4>
-                    <p className="text-2xl font-bold">LKR {selectedOrder.total_amount.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">
+                      LKR {(selectedOrder.total_amount > 0 
+                        ? selectedOrder.total_amount 
+                        : (Array.isArray(selectedOrder.order_items) && ((selectedOrder.order_items as any[])[0]?.price || (selectedOrder.order_items as any[])[0]?.lead_details?.product_price)) || 0
+                      ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
                   </div>
                 </div>
 
-                {selectedOrder.special_instructions && (
+                {/* Lead Requirements & Specifications */}
+                {(selectedOrder.special_instructions || (Array.isArray(selectedOrder.order_items) && (selectedOrder.order_items as any[])[0]?.lead_details)) && (
                   <div className="space-y-2">
-                    <h4 className="font-medium text-sm text-muted-foreground">Special Instructions</h4>
-                    <p className="text-sm bg-muted p-3 rounded-lg">{selectedOrder.special_instructions}</p>
+                    <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-amber-500" />
+                      Lead Requirements & Specifications
+                    </h4>
+                    <div className="text-sm bg-muted/60 border rounded-xl p-4 space-y-2 font-sans">
+                      {selectedOrder.special_instructions ? (
+                        selectedOrder.special_instructions.split("\n").map((line: string, lIdx: number) => {
+                          const trimmed = line.trim();
+                          if (!trimmed) return null;
+                          if (trimmed.startsWith("🌟")) {
+                            return (
+                              <p key={lIdx} className="font-semibold text-primary pb-2 border-b border-border/60 flex items-center gap-1.5">
+                                {trimmed}
+                              </p>
+                            );
+                          }
+                          return (
+                            <div key={lIdx} className="text-foreground/90 flex items-start gap-2 text-sm leading-relaxed">
+                              <span>{trimmed}</span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        (() => {
+                          const ld = (selectedOrder.order_items as any[])[0]?.lead_details || {};
+                          return (
+                            <div className="space-y-1.5 text-foreground/90">
+                              <p className="font-semibold text-primary pb-2 border-b border-border/60">🌟 QUALIFIED LEAD REQUIREMENT</p>
+                              {ld.category && <p>💎 Category: {ld.category}</p>}
+                              {(ld.gemstone_type || ld.selected_product) && <p>🔹 Gemstone / Style: {ld.gemstone_type || ld.selected_product}</p>}
+                              {ld.color && <p>🎨 Color Tone: {ld.color}</p>}
+                              {ld.size && <p>📏 Size / Dimensions: {ld.size}</p>}
+                              {(ld.budget || ld.budget_bracket) && <p>💰 Budget Bracket: {ld.budget || ld.budget_bracket}</p>}
+                              {(ld.gift_recipient || ld.recipient) && <p>🎁 Gift Recipient: {ld.gift_recipient || ld.recipient}</p>}
+                              {(ld.required_date || ld.date) && <p>📅 Required Date: {ld.required_date || ld.date}</p>}
+                              {(ld.interested_product || ld.selected_product) && <p>🛍️ Matched Product: {ld.interested_product || ld.selected_product}</p>}
+                              {(ld.product_price || ld.price) && <p>💵 Product Price: LKR {typeof ld.product_price === "number" ? ld.product_price.toLocaleString() : (ld.price || ld.product_price)}</p>}
+                            </div>
+                          );
+                        })()
+                      )}
+                    </div>
                   </div>
                 )}
 

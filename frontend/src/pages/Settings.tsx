@@ -37,6 +37,17 @@ interface WsenderSession {
   phone?: string;
 }
 
+async function parseResponseError(response: Response, fallback: string): Promise<string> {
+  try {
+    const text = await response.text();
+    if (!text.trim()) return fallback;
+    const data = JSON.parse(text);
+    return data.error || data.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,7 +114,7 @@ export default function Settings() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [_settingWebhook, setSettingWebhook] = useState<string | null>(null);
 
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-wsender`;
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-wsender-Ceylon_gems`;
 
   const getFunctionAuthHeaders = useCallback(async (includeJson = false) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -222,15 +233,14 @@ export default function Settings() {
 
       // Fetch all sessions from Wasender API then filter to only user's
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions?action=list-sessions`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions-Ceylon_gems?action=list-sessions`,
         {
           headers: await getFunctionAuthHeaders(),
         }
       );
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to fetch sessions");
+        throw new Error(await parseResponseError(response, "Failed to fetch sessions"));
       }
 
       const result = await response.json();
@@ -256,7 +266,7 @@ export default function Settings() {
     setQrCode(null);
     setQrImage(null);
     setSelectedSessionId(sessionId);
-    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions`;
+    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions-Ceylon_gems`;
 
     try {
       const authHeaders = await getFunctionAuthHeaders();
@@ -270,8 +280,7 @@ export default function Settings() {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to fetch QR code");
+        throw new Error(await parseResponseError(response, "Failed to fetch QR code"));
       }
 
       const result = await response.json();
@@ -310,7 +319,7 @@ export default function Settings() {
     setCreatingSession(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions?action=create-session`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions-Ceylon_gems?action=create-session`,
         {
           method: "POST",
           headers: await getFunctionAuthHeaders(true),
@@ -322,8 +331,7 @@ export default function Settings() {
         }
       );
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to create session");
+        throw new Error(await parseResponseError(response, "Failed to create session"));
       }
       const result = await response.json();
       const newSession = result.data || result;
@@ -338,7 +346,7 @@ export default function Settings() {
         let sessionApiKey: string | null = null;
         try {
           const detailsRes = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions?action=session-details&sessionId=${newSession.id}`,
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions-Ceylon_gems?action=session-details&sessionId=${newSession.id}`,
             { headers: await getFunctionAuthHeaders() }
           );
           if (detailsRes.ok) {
@@ -375,7 +383,7 @@ export default function Settings() {
     setSettingWebhook(sessionId);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions?action=set-webhook&sessionId=${sessionId}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions-Ceylon_gems?action=set-webhook&sessionId=${sessionId}`,
         {
           method: "POST",
           headers: await getFunctionAuthHeaders(true),
@@ -383,8 +391,7 @@ export default function Settings() {
         }
       );
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to set webhook");
+        throw new Error(await parseResponseError(response, "Failed to set webhook"));
       }
       toast({ title: "Webhook configured!", description: "Webhook URL has been set on this session." });
     } catch (error: any) {
@@ -402,15 +409,14 @@ export default function Settings() {
     setDeletingSessionId(sessionId);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions?action=delete-session&sessionId=${sessionId}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wsender-sessions-Ceylon_gems?action=delete-session&sessionId=${sessionId}`,
         {
           method: "DELETE",
           headers: await getFunctionAuthHeaders(),
         }
       );
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to delete session");
+        throw new Error(await parseResponseError(response, "Failed to delete session"));
       }
       // Remove from local DB mapping
       if (user) {

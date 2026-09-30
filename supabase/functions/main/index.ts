@@ -13,9 +13,24 @@ serve(async (req: Request) => {
     return new Response("BuildStart.io edge-runtime router OK", { status: 200 });
   }
 
+  let servicePath = `/home/deno/functions/${functionName}`;
+  try {
+    await Deno.stat(servicePath);
+  } catch {
+    if (!functionName.endsWith("-Ceylon_gems")) {
+      const ceylonPath = `/home/deno/functions/${functionName}-Ceylon_gems`;
+      try {
+        await Deno.stat(ceylonPath);
+        servicePath = ceylonPath;
+      } catch {
+        // keep original path for error reporting
+      }
+    }
+  }
+
   try {
     const worker = await EdgeRuntime.userWorkers.create({
-      servicePath: `/home/deno/functions/${functionName}`,
+      servicePath,
       memoryLimitMb: 256,
       workerTimeoutMs: 5 * 60 * 1000,
       cpuTimeSoftLimitMs: 5 * 60 * 1000,
