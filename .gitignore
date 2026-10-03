@@ -33,3 +33,4 @@ docker/volumes/minio/
 docker/volumes/waha/
 docker/volumes/storage/
 docker/volumes/snippets/
+*.exp

@@ -2156,15 +2156,15 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA "Ceylon_gems" GRANT ALL ON SEQUENCES TO postg
 --
 -- Auth triggers for automatic profile, role, and settings initialization
 --
-CREATE OR REPLACE TRIGGER on_auth_user_created
+CREATE OR REPLACE TRIGGER on_auth_user_created_Ceylon_gems
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION "Ceylon_gems".handle_new_user();
 
-CREATE OR REPLACE TRIGGER on_auth_user_created_role
+CREATE OR REPLACE TRIGGER on_auth_user_created_role_Ceylon_gems
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION "Ceylon_gems".handle_new_user_role();
 
-CREATE OR REPLACE TRIGGER on_auth_user_created_settings
+CREATE OR REPLACE TRIGGER on_auth_user_created_settings_Ceylon_gems
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION "Ceylon_gems".handle_new_user_settings();
 
