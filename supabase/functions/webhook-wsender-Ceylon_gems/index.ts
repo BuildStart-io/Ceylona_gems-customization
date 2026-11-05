@@ -65,16 +65,33 @@ serve(async (req) => {
       return new Response(JSON.stringify({ ok: true }), { headers: jsonHeaders });
     }
 
-    if (event !== "message" && event !== "message.any") {
+    if (event !== "message" && event !== "message.any" && event !== "poll.vote") {
       console.log(`[${correlationId}] Ignoring event: ${event}`);
       return new Response(JSON.stringify({ ok: true, skipped: event }), { headers: jsonHeaders });
     }
 
-    if (wp?.fromMe === true) {
-      return new Response(JSON.stringify({ ok: true, skipped: "fromMe" }), { headers: jsonHeaders });
+    const voteObj = wp?.vote || {};
+    const pollObj = wp?.poll || {};
+
+    // For regular messages: check wp.fromMe. For poll votes: check voteObj.fromMe.
+    if (event === "poll.vote") {
+      if (voteObj.fromMe === true) {
+        return new Response(JSON.stringify({ ok: true, skipped: "fromMe_vote" }), { headers: jsonHeaders });
+      }
+    } else {
+      if (wp?.fromMe === true) {
+        return new Response(JSON.stringify({ ok: true, skipped: "fromMe" }), { headers: jsonHeaders });
+      }
     }
 
-    const fromJid = String(wp.from || wp._data?.key?.remoteJid || "");
+    const fromJid = String(
+      wp?.from ||
+      voteObj.from ||
+      pollObj.to ||
+      wp?.chatId ||
+      wp?._data?.key?.remoteJid ||
+      ""
+    );
     if (/@g\.us$/i.test(fromJid) || /@broadcast$/i.test(fromJid) || /@newsletter$/i.test(fromJid)) {
       return new Response(JSON.stringify({ ok: true, skipped: "non_individual" }), { headers: jsonHeaders });
     }
@@ -106,8 +123,8 @@ serve(async (req) => {
       if (!phoneNumber) phoneNumber = fromJid;
     } else {
       phoneNumber = extractPhoneFromJid(fromJid)
-        || extractPhoneFromJid(wp._data?.key?.participantPn || "")
-        || extractPhoneFromJid(wp._data?.key?.senderPn || "");
+        || extractPhoneFromJid(wp?._data?.key?.participantPn || "")
+        || extractPhoneFromJid(wp?._data?.key?.senderPn || "");
     }
 
     if (!phoneNumber) {
@@ -115,28 +132,46 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "No phone number" }), { status: 400, headers: jsonHeaders });
     }
 
-
     // Text body — WAHA usually puts it on payload.body
-    const messageText = wp.body
-      || wp._data?.message?.conversation
-      || wp._data?.message?.extendedTextMessage?.text
+    let messageText = wp?.body
+      || wp?._data?.message?.conversation
+      || wp?._data?.message?.extendedTextMessage?.text
       || "";
 
+    // Poll Vote Extraction (WAHA sends poll.vote or payload.selectedOptions)
+    if (event === "poll.vote" || wp?.selectedOptions || voteObj.selectedOptions || wp?.pollVote || wp?._data?.selectedOptions) {
+      const selected = voteObj.selectedOptions || wp?.selectedOptions || pollObj?.selectedOptions || wp?._data?.selectedOptions || wp?.pollVote?.selectedOptions || [];
+      const voteStr = Array.isArray(selected) ? (selected[0] || selected.join(", ")) : String(selected || "");
+      if (voteStr) {
+        messageText = voteStr;
+      }
+    }
+
     // Message type — derive from WAHA `type` or `_data.message.*` keys
-    let messageType = wp.type || "text";
+    let messageType = wp?.type || "text";
     if (messageType === "chat") messageType = "text";
+    if (event === "poll.vote" || wp?.selectedOptions || voteObj.selectedOptions) {
+      messageType = "poll_vote";
+    }
     
-    const wMsg = wp._data?.message || {};
+    const wMsg = wp?._data?.message || {};
     if (wMsg.imageMessage) messageType = "image";
     else if (wMsg.videoMessage) messageType = "video";
     else if (wMsg.audioMessage) messageType = wMsg.audioMessage?.ptt ? "ptt" : "audio";
     else if (wMsg.documentMessage) messageType = "document";
     else if (wMsg.stickerMessage) messageType = "sticker";
     else if (wMsg.locationMessage) messageType = "location";
-    else if (wp.hasMedia && !messageText && messageType === "text") messageType = "image";
+    else if (wp?.hasMedia && !messageText && messageType === "text") messageType = "image";
 
-    const senderName = wp._data?.pushName || wp._data?.notifyName || wp.notifyName || "Unknown";
-    const wahaMessageId = wp.id || wp._data?.key?.id || `${phoneNumber}-${Date.now()}`;
+    const senderName = wp?._data?.pushName
+      || wp?._data?.notifyName
+      || wp?.notifyName
+      || voteObj.pushName
+      || "Unknown";
+
+    const wahaMessageId = event === "poll.vote"
+      ? (voteObj.id ? `${voteObj.id}_${Date.now()}` : `vote_${Date.now()}`)
+      : (wp?.id || wp?._data?.key?.id || `${phoneNumber}-${Date.now()}`);
 
     if (!userId) {
       console.error(`[${correlationId}] No user mapped to WAHA session "${sessionName}"`);

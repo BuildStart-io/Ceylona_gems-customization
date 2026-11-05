@@ -143,7 +143,7 @@ serve(async (req) => {
 
     // WAHA session name locked to the user — slug-safe, deterministic, fits within ~25 chars.
     const sessionName = `u_${userId.replace(/-/g, "").substring(0, 20)}`;
-    let override = Deno.env.get("WEBHOOK_URL_OVERRIDE");
+    let override = Deno.env.get("WEBHOOK_URL_OVERRIDE_CEYLON") || Deno.env.get("WEBHOOK_URL_OVERRIDE");
     if (override && !override.includes("-Ceylon_gems")) {
       override = override.replace("webhook-wsender", "webhook-wsender-Ceylon_gems");
     }
@@ -190,7 +190,7 @@ serve(async (req) => {
           noweb: { store: { enabled: true, fullSync: true } },
           webhooks: [{
             url: webhookUrl,
-            events: ["message", "session.status"],
+            events: ["message", "message.any", "session.status", "poll.vote", "poll.vote.failed"],
             retries: { policy: "linear", delaySeconds: 2, attempts: 3 },
           }],
         };

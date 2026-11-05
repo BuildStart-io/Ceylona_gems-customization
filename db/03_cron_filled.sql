@@ -18,7 +18,7 @@ SELECT cron.schedule(
   $$
   SELECT net.http_post(
     url     := 'http://api-gw:8000/functions/v1/process-message-Ceylon_gems',
-    headers := '{"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UtZGVtbyIsImlhdCI6MTc5MDUzMTA4MSwiZXhwIjoyMTA1ODkxMDgxfQ.TAwFT4Zgsu6Y4DsJpF781jRRwuo966FsYezsuwei3z4"}'::jsonb,
+    headers := '{"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"}'::jsonb,
     body    := '{"trigger":"cron"}'::jsonb
   );
   $$
@@ -31,7 +31,7 @@ SELECT cron.schedule(
   $$
   SELECT net.http_post(
     url     := 'http://api-gw:8000/functions/v1/send-followups-Ceylon_gems',
-    headers := '{"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UtZGVtbyIsImlhdCI6MTc5MDUzMTA4MSwiZXhwIjoyMTA1ODkxMDgxfQ.TAwFT4Zgsu6Y4DsJpF781jRRwuo966FsYezsuwei3z4"}'::jsonb,
+    headers := '{"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"}'::jsonb,
     body    := '{}'::jsonb
   );
   $$

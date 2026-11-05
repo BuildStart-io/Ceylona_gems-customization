@@ -60,11 +60,11 @@ serve(async (req) => {
   }
 
   try {
-    const { to, message, sessionApiKey, imageUrl, mediaUrl, mediaType: explicitType } = await req.json();
+    const { to, message, sessionApiKey, imageUrl, mediaUrl, mediaType: explicitType, poll } = await req.json();
 
-    if (!to || (!message && !imageUrl && !mediaUrl)) {
+    if (!to || (!message && !imageUrl && !mediaUrl && !poll)) {
       return new Response(
-        JSON.stringify({ error: "Missing 'to' or 'message'/'mediaUrl' field" }),
+        JSON.stringify({ error: "Missing 'to' or 'message'/'mediaUrl'/'poll' field" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -75,11 +75,27 @@ serve(async (req) => {
     const url = mediaUrl || imageUrl;
     const detectedType = explicitType || (url ? detectMediaType(url) : null);
 
-    console.log(`Sending WhatsApp via WAHA session=${sessionName} to=${chatId}${url ? ` (${detectedType})` : ""}: ${(message || "").substring(0, 60)}`);
+    console.log(`Sending WhatsApp via WAHA session=${sessionName} to=${chatId}${poll ? " [POLL]" : ""}${url ? ` (${detectedType})` : ""}: ${(message || poll?.name || "").substring(0, 60)}`);
 
     let res: Response;
 
-    if (url) {
+    if (poll && poll.name && Array.isArray(poll.options) && poll.options.length >= 2) {
+      try {
+        res = await wahaFetch("/api/sendPoll", {
+          session: sessionName,
+          chatId,
+          poll: {
+            name: poll.name,
+            options: poll.options,
+            multipleAnswers: poll.multipleAnswers ?? false,
+          },
+        });
+      } catch (pollErr) {
+        console.warn("WAHA sendPoll failed, falling back to formatted text options:", pollErr);
+        const fallbackText = `${poll.name}\n\n${poll.options.map((opt: string, i: number) => `${i + 1}. ${opt}`).join("\n")}`;
+        res = await wahaFetch("/api/sendText", { session: sessionName, chatId, text: fallbackText });
+      }
+    } else if (url) {
       let resolvedUrl = url;
       if (resolvedUrl.includes("localhost:9000")) {
         resolvedUrl = resolvedUrl.replace("localhost:9000", "minio:9002");
@@ -131,7 +147,12 @@ serve(async (req) => {
     if (!res.ok) {
       let parsed: any = null;
       try { parsed = JSON.parse(responseText); } catch { /* ignore */ }
-      throw new Error(parsed?.message || parsed?.error || `WAHA send failed (${res.status}): ${responseText.substring(0, 200)}`);
+      const errDetail = parsed?.message || parsed?.error || `WAHA send failed (${res.status}): ${responseText.substring(0, 200)}`;
+      console.warn(`WAHA send warning: ${errDetail}`);
+      return new Response(JSON.stringify({ success: false, warning: errDetail }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     let data: any = null;

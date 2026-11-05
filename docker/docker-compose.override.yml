@@ -19,11 +19,11 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_REGION: ${MINIO_REGION}
-      WEBHOOK_URL_OVERRIDE: "https://pumps-thompson-inn-concerning.trycloudflare.com/functions/v1/webhook-wsender-Ceylon_gems"
+      WEBHOOK_URL_OVERRIDE: "https://yale-locking-consequently-checking.trycloudflare.com/functions/v1/webhook-wsender-Ceylon_gems"
 
   minio:
     container_name: minio
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     restart: unless-stopped
     command: server /data --address ":9002" --console-address ":9001"
     ports:

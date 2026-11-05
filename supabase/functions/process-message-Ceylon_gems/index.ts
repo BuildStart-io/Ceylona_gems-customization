@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { transcribeAudio } from "./transcribe.ts";
+import { handleQualificationFlow, getResumePromptForStep } from "./qualificationFlow.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -263,7 +264,77 @@ async function processMessage(
     return;
   }
 
-  // 4. Check if first message (for welcome message flow)
+  // 4. Qualification Flow Controller (Function-First Engine)
+  mark("flow_start");
+  const flowResult = await handleQualificationFlow(
+    supabase,
+    supabaseUrl,
+    supabaseServiceKey,
+    userId,
+    phoneNumber,
+    senderName,
+    messageText,
+    messageType,
+    sessionApiKey
+  );
+  mark("flow_end");
+
+  if (flowResult.handled) {
+    console.log(`[${corrId}] Handled deterministically by Qualification Flow Controller in ${timings.flow_end - timings.flow_start}ms`);
+    const replyMessage = flowResult.replyText || "";
+    const replyImageUrls = flowResult.imageUrls || [];
+    const pollToSend = flowResult.poll || null;
+
+    // Store outgoing message in conversation history
+    mark("store_outbound_start");
+    await supabase.from("conversations").insert({
+      phone_number: phoneNumber,
+      message: replyMessage + (pollToSend ? `\n[Poll: ${pollToSend.name}]` : ""),
+      direction: "outbound",
+      message_type: pollToSend ? "poll" : (replyImageUrls.length > 0 ? "image" : "text"),
+      metadata: { correlationId: corrId, is_qualification_flow: true },
+      user_id: userId,
+    });
+    mark("store_outbound_end");
+
+    mark("send_start");
+    // Send images if any
+    for (let imgIdx = 0; imgIdx < replyImageUrls.length; imgIdx++) {
+      await sendWhatsAppMedia(supabaseUrl, supabaseServiceKey, phoneNumber, replyImageUrls[imgIdx], sessionApiKey);
+      if (imgIdx < replyImageUrls.length - 1) {
+        await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+
+    // Send text message (split into short conversational bubbles if multi-paragraph)
+    if (replyMessage) {
+      const textBubbles = replyMessage
+        .split(/\n{2,}/)
+        .map((b: string) => b.trim())
+        .filter((b: string) => b.length > 0);
+
+      if (textBubbles.length > 1 && textBubbles.length <= 4) {
+        for (let bIdx = 0; bIdx < textBubbles.length; bIdx++) {
+          await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, textBubbles[bIdx], null, sessionApiKey);
+          if (bIdx < textBubbles.length - 1) {
+            await new Promise((r) => setTimeout(r, 600));
+          }
+        }
+      } else {
+        await sendWhatsApp(supabaseUrl, supabaseServiceKey, phoneNumber, replyMessage, null, sessionApiKey);
+      }
+    }
+
+    // Send interactive poll if provided
+    if (pollToSend) {
+      await sendWhatsAppPoll(supabaseUrl, supabaseServiceKey, phoneNumber, pollToSend, sessionApiKey);
+    }
+    mark("send_end");
+
+    return; // Complete turn without touching LLM!
+  }
+
+  // 5. Check if first message (for welcome message flow fallback)
   const { count: convoCount } = await supabase
     .from("conversations")
     .select("id", { count: "exact", head: true })
@@ -421,6 +492,33 @@ async function processMessage(
     });
   }
 
+  // If the customer is currently in an active qualification step, return to the flow by sending the step's poll!
+  try {
+    const { data: activeLead } = await supabase
+      .from("leads")
+      .select("custom_fields")
+      .eq("user_id", userId)
+      .eq("phone_number", phoneNumber)
+      .maybeSingle();
+
+    const currentFlowState = activeLead?.custom_fields?.flow_state;
+    if (
+      currentFlowState?.current_step &&
+      currentFlowState.current_step !== "START" &&
+      currentFlowState.current_step !== "QUALIFIED_COMPLETE" &&
+      currentFlowState.current_step !== "HANDED_OFF" &&
+      !activeLead?.custom_fields?.is_qualified
+    ) {
+      const resume = getResumePromptForStep(currentFlowState);
+      if (resume?.poll) {
+        console.log(`[${corrId}] Returning to qualification flow step ${currentFlowState.current_step} with poll`);
+        await sendWhatsAppPoll(supabaseUrl, supabaseServiceKey, phoneNumber, resume.poll, sessionApiKey);
+      }
+    }
+  } catch (resumeErr) {
+    console.warn(`[${corrId}] Flow resume poll error:`, resumeErr);
+  }
+
   mark("send_end");
 }
 
@@ -556,6 +654,33 @@ async function sendWhatsAppMedia(
     console.error("Send media error:", await res.text());
   } else {
     console.log("Media sent:", mediaUrl.substring(0, 80));
+  }
+}
+
+async function sendWhatsAppPoll(
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  to: string,
+  poll: { name: string; options: string[]; multipleAnswers?: boolean },
+  sessionApiKey: string
+) {
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${supabaseServiceKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ to, poll, sessionApiKey }),
+    });
+
+    if (!res.ok) {
+      console.error("Send poll error:", await res.text());
+    } else {
+      console.log(`Poll sent: "${poll.name}" (${poll.options.length} options)`);
+    }
+  } catch (err) {
+    console.error("Send poll fetch exception:", err);
   }
 }
 
