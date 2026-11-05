@@ -912,16 +912,14 @@ export async function handleQualificationFlow(
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
     const isRing = (state.jewelry_type || "").includes("Ring");
+    const settingLabel = isRing ? "Solid 925 Silver Ring Setting" : "Solid 925 Silver Setting";
+
     const recLines = recommendations.map((p, idx) => {
-      const priceEst = isRing
-        ? `LKR ${(p.price || 12500).toLocaleString()} – ${((p.price || 12500) + 7500).toLocaleString()}`
-        : `LKR ${p.price?.toLocaleString()}`;
-      return `${idx + 1}️⃣ *${p.name}*\n💰 Estimated Price: ${priceEst} (Gemstone + Silver Setting)\n💍 Solid 925 Sterling Silver\n📜 Gem Lab Certificate Included\n`;
+      const gemPrice = p.price || 10000;
+      return `${idx + 1}️⃣ *${p.name}*\n💎 Gemstone Price: LKR ${gemPrice.toLocaleString()}\n💍 ${settingLabel}: ~LKR 5,000 ක පමණ (Design එක අනුව vary වේ)\n📜 Government-Registered Gem Lab Certificate Included\n`;
     }).join("\n");
 
-    const disclaimNote = isRing
-      ? "ℹ️ *සැලකිය යුතුයි:* Design එක අනුව final price එක වෙනස් වෙන්න පුළුවන්. ඔබ තෝරාගන්නා design එකට අදාළ සම්පූර්ණ අවසන් මිල අපේ sales agent confirm කරලා දෙනු ඇත.\n\n"
-      : "";
+    const disclaimNote = "ℹ️ *සැලකිය යුතුයි:* ඉහත දක්වා ඇත්තේ Gemstone එකෙහි මිල වන අතර, Silver Setting සඳහා design එක අනුව LKR 5,000 ක පමණ මුදලක් vary විය හැක. ඔබ කැමති design එකට අදාළ සම්පූර්ණ අවසන් මිල අපේ sales agent ඔබ සමඟ confirm කරනු ඇත.\n\n";
 
     const imageUrls = recommendations.flatMap((p) => p.images || []).slice(0, 2);
 
@@ -1029,13 +1027,23 @@ export async function handleQualificationFlow(
     state.current_step = "CONFIRMATION";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
-    const priceText = state.jewelry_type?.includes("Ring")
-      ? `LKR ${(selectedProduct.price || 12500).toLocaleString()} – ${((selectedProduct.price || 12500) + 7500).toLocaleString()} (Gemstone + Silver Setting)`
-      : `LKR ${(selectedProduct.price || 10000).toLocaleString()}`;
+    const isJewelry = state.category === "Silver Jewelry" || !!state.jewelry_type;
+    const gemPrice = selectedProduct.price || 10000;
+
+    let priceSection = "";
+    let noteSection = "";
+    if (isJewelry) {
+      const isRing = (state.jewelry_type || "").includes("Ring");
+      const settingLabel = isRing ? "Solid 925 Silver Ring Setting" : "Solid 925 Silver Setting";
+      priceSection = `💎 *Gemstone Price:* LKR ${gemPrice.toLocaleString()}\n💍 *${settingLabel}:* ~LKR 5,000 ක පමණ (Design එක අනුව vary වේ)\n`;
+      noteSection = `\nℹ️ *සැලකිය යුතුයි:* ඔබ තෝරාගන්නා design එක අනුව සම්පූර්ණ අවසන් මිල අපේ sales agent confirm කරනු ඇත.\n`;
+    } else {
+      priceSection = `💰 *Price:* LKR ${gemPrice.toLocaleString()}\n`;
+    }
 
     return {
       handled: true,
-      replyText: `✨ *ඔබ තෝරාගත් අයිතමය:*\n💎 *${selectedProduct.name}*\n${state.ring_size ? `💍 *Ring Size:* ${state.ring_size}\n` : ""}${state.size ? `📏 *Size:* ${state.size}\n` : ""}💰 *Estimated Price:* ${priceText}\n📜 *Gem Lab Certificate:* Included (Worth LKR 1,500)\n🎁 *Recipient:* ${state.gift_recipient || "Special Gift"}\n📅 *Needed By:* ${state.required_date || "Confirmed with Agent"}\n\nමේ විස්තර ඔක්කොම හරිද? Order එක confirm කරලා proceed කරන්නද? ✨`,
+      replyText: `✨ *ඔබ තෝරාගත් අයිතමය:*\n💎 *${selectedProduct.name}*\n${state.jewelry_type ? `💍 *Jewelry Type:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Ring Size:* ${state.ring_size}\n` : ""}${state.size ? `📏 *Size:* ${state.size}\n` : ""}${priceSection}📜 *Gem Lab Certificate:* Included (Worth LKR 1,500)\n🎁 *Recipient:* ${state.gift_recipient || "Special Gift"}\n📅 *Needed By:* ${state.required_date || "Confirmed with Agent"}\n${noteSection}\nමේ විස්තර ඔක්කොම හරිද? Order එක confirm කරලා proceed කරන්නද? ✨`,
       poll: {
         name: "✨ Confirm කරලා proceed කරන්නද?",
         options: [
@@ -1055,6 +1063,10 @@ export async function handleQualificationFlow(
       // QUALIFIED LEAD RECORD CREATION
       const prod = state.selected_product || { name: state.gemstone_type || "Ceylon Gem", price: state.budget_min || 10000 };
       const actualPrice = prod.price || state.budget_min || 10000;
+      const isJewelry = state.category === "Silver Jewelry" || !!state.jewelry_type;
+      const priceDescription = isJewelry
+        ? `LKR ${actualPrice.toLocaleString()} (Gemstone) + ~LKR 5,000 (Silver Setting - to be confirmed by agent)`
+        : `LKR ${actualPrice.toLocaleString()}`;
 
       const instructions = [
         `🌟 QUALIFIED LEAD — CEYLONA GEMS`,
@@ -1067,7 +1079,7 @@ export async function handleQualificationFlow(
         `🎁 Recipient: ${state.gift_recipient || "Special Someone"}`,
         `📅 Needed By: ${state.required_date || "Not Specified"}`,
         `🛍️ Selected Item: ${prod.name}`,
-        `💵 Base / Estimated Price: LKR ${actualPrice.toLocaleString()}`,
+        `💵 Price Details: ${priceDescription}`,
         state.packaging_requested ? `📦 Packaging: ${state.packaging_requested}` : null,
       ].filter(Boolean).join("\n");
 
@@ -1114,7 +1126,7 @@ export async function handleQualificationFlow(
 
         const ownerPhone = notifSettings?.value?.phone;
         if (ownerPhone) {
-          const notifMessage = `🌟 *NEW QUALIFIED LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* ${state.category}\n🛍️ *Item:* ${prod.name}\n${state.ring_size ? `💍 *Size:* ${state.ring_size}\n` : ""}💰 *Budget:* ${state.budget_tier || "N/A"}\n🎁 *Recipient:* ${state.gift_recipient}\n📅 *Needed By:* ${state.required_date}\n💵 *Price:* LKR ${actualPrice.toLocaleString()}\n\n👉 *Reply on WhatsApp to finalize!*`;
+          const notifMessage = `🌟 *NEW QUALIFIED LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* ${state.category}\n🛍️ *Item:* ${prod.name}\n${state.jewelry_type ? `💍 *Jewelry:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Size:* ${state.ring_size}\n` : ""}💰 *Budget:* ${state.budget_tier || "N/A"}\n🎁 *Recipient:* ${state.gift_recipient}\n📅 *Needed By:* ${state.required_date}\n💵 *Price Details:* ${priceDescription}\n\n👉 *Reply on WhatsApp to finalize!*`;
 
           await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
             method: "POST",
@@ -1133,9 +1145,13 @@ export async function handleQualificationFlow(
         console.warn("[FlowController] Owner alert error:", err);
       }
 
+      const replyConfirm = isJewelry
+        ? "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. ඔබ තෝරාගන්නා design එකට අදාළ silver setting සහ සම්පූර්ණ අවසන් මිල confirm කරගන්න අපේ sales specialist කෙනෙක් ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨"
+        : "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. අපේ sales specialist කෙනෙක් details confirm කරගන්න ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨";
+
       return {
         handled: true,
-        replyText: "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. අපේ sales specialist කෙනෙක් details confirm කරගන්න ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨",
+        replyText: replyConfirm,
         isQualified: true,
       };
     } else {
@@ -1366,21 +1382,13 @@ async function fetchConfiguredRecommendations(
 
     if (!allProducts || allProducts.length === 0) return [];
 
-    const isRing = categoryKeyword.toLowerCase().includes("ring");
-    const isPendant = categoryKeyword.toLowerCase().includes("pendant");
-    const isJewelry = categoryKeyword.toLowerCase().includes("silver") || isRing || isPendant;
-
-    // Filter by category
+    // Filter by category: Ceylon_gems catalog contains gemstones which are used both for loose gifts and silver jewelry
     let pool = allProducts.filter((p: any) => {
       const pName = (p.name || "").toLowerCase();
-      if (isRing) return pName.includes("ring");
-      if (isPendant) return pName.includes("pendant");
-      if (isJewelry) return pName.includes("ring") || pName.includes("pendant") || pName.includes("silver");
-      // Gemstone
-      return !pName.includes("ring") && !pName.includes("pendant") && !pName.includes("box") && !pName.includes("card") && !pName.includes("hamper");
+      return !pName.includes("box") && !pName.includes("card") && !pName.includes("hamper") && !pName.includes("packaging");
     });
 
-    if (pool.length === 0) pool = allProducts.slice(0, 5);
+    if (pool.length === 0) pool = allProducts;
 
     // Score by color/gemstone match and budget
     const cleanColor = colorKeyword.toLowerCase();
