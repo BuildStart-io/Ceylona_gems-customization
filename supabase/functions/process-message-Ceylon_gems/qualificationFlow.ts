@@ -183,6 +183,307 @@ function extractRecipient(text: string): string | null {
   return null;
 }
 
+export interface BudgetTier {
+  label: string;
+  min: number;
+  max: number;
+}
+
+export interface FlowStepConfig {
+  main_text?: string;
+  top_message?: string;
+  bottom_message?: string;
+}
+
+export interface ChatFlowConfig {
+  categories?: {
+    gemstones?: {
+      enabled?: boolean;
+      label?: string;
+      top_message?: string;
+      bottom_message?: string;
+      budget_tiers?: BudgetTier[];
+    };
+    jewelry?: {
+      enabled?: boolean;
+      label?: string;
+      silver_setting_cost?: number;
+      top_message?: string;
+      bottom_message?: string;
+      budget_tiers?: BudgetTier[];
+    };
+    packaging?: {
+      enabled?: boolean;
+      label?: string;
+      top_message?: string;
+      bottom_message?: string;
+    };
+  };
+  steps?: {
+    greeting?: FlowStepConfig;
+    gem_budget?: FlowStepConfig;
+    gem_color?: FlowStepConfig;
+    gem_size?: FlowStepConfig;
+    gem_recipient_date?: FlowStepConfig;
+    jewelry_type?: FlowStepConfig;
+    ring_size?: FlowStepConfig;
+    jewelry_color?: FlowStepConfig;
+    jewelry_budget?: FlowStepConfig;
+    jewelry_recipient_date?: FlowStepConfig;
+    silver_disclaimer?: FlowStepConfig;
+    packaging_select?: FlowStepConfig;
+    custom_design?: FlowStepConfig;
+    confirmation?: FlowStepConfig;
+    agent_handoff?: FlowStepConfig;
+    restart_flow?: FlowStepConfig;
+    [key: string]: FlowStepConfig | undefined;
+  };
+  general_messages?: {
+    greeting_top_message?: string;
+    greeting_bottom_message?: string;
+    confirmation_top_message?: string;
+    confirmation_bottom_message?: string;
+    handoff_message?: string;
+  };
+}
+
+export const DEFAULT_FLOW_STEPS: Record<string, FlowStepConfig> = {
+  greeting: {
+    main_text: "ආයුබෝවන්! 💎 Ceylona Gems & Jewelry වෙත සාදරයෙන් පිළිගන්නවා. අපි ඔයාට ලස්සනම gift එකක් තෝරගන්න උදව් කරන්නම්. ✨\n\nඔයා බලන්න කැමති මොන gift option එකද? පහළින් තෝරන්නකෝ 👇",
+  },
+  gem_budget: {
+    main_text: "නියමයි! 💎 අපේ හැම gemstone එකකටම රජයේ ලියාපදිංචි Gem Lab Certificate එකක් ඇතුළත් කරලා තියෙන්නේ (LKR 1,500ක සහතිකයක් මිලටම ඇතුළත්). ✨\n\nඔයා බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+  },
+  gem_color: {
+    main_text: "Budget එක සටහන් කරගත්තා! 💰💎\nඔබ විශේෂයෙන් සොයන Gemstone වර්ගයක් හෝ පාටක් (Color) තියෙනවද? (උදා: Blue Sapphire, Ruby, Yellow Sapphire, Amethyst, etc.)\nනැත්නම් 'ඕනෑම පාටක්' කියලා කියන්නත් පුළුවන් ✨",
+  },
+  gem_size: {
+    main_text: "නියමයි! 💎 ඔයා බලාපොරොත්තු වෙන Gemstone Size එක පහළින් තෝරන්නකෝ 👇",
+  },
+  gem_recipient_date: {
+    main_text: "හොඳයි! 💎 මේ gift එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) සහ මේක ඔබට කවදා වන විටද අවශ්‍ය වෙන්නේ? 🎁📅",
+  },
+  jewelry_type: {
+    main_text: "හරිම ලස්සන තේරීමක්! 💍✨ අපේ Silver Jewelry collection එක Solid 925 Silver වලින් master craftsmanship එකෙන් නිර්මාණය කරන්නේ (Handcrafted Silver pieces start from LKR 10,000+).\n\nඔයා කැමති jewelry වර්ගය පහළින් තෝරන්නකෝ 👇",
+  },
+  ring_size: {
+    main_text: "Solid 925 Silver Rings! 💍✨ ඔයාගෙ Ring Size එක දන්නවද? (උදා: US 6, 7, 8 හෝ 'දන්නේ නෑ' කියලා කියන්න පුළුවන්) ✨",
+  },
+  jewelry_color: {
+    main_text: "නියමයි! 💍 Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Ruby, Pink, White, etc.)",
+  },
+  jewelry_budget: {
+    main_text: "Silver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+  },
+  jewelry_recipient_date: {
+    main_text: "හොඳයි! 💍 මේ gift එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) සහ මේක ඔබට කවදා වන විටද අවශ්‍ය වෙන්නේ? 🎁📅",
+  },
+  silver_disclaimer: {
+    main_text: "ℹ️ *සැලකිය යුතුයි:* ඉහත දක්වා ඇත්තේ Gemstone එකෙහි මිල වන අතර, Silver Setting සඳහා design එක අනුව LKR {cost} ක පමණ මුදලක් vary විය හැක. ඔබ කැමති design එකට අදාළ සම්පූර්ණ අවසන් මිල අපේ sales agent ඔබ සමඟ confirm කරනු ඇත.",
+  },
+  packaging_select: {
+    main_text: "අපි ළඟ තෑගි සඳහා විශේෂ Gift Packaging සහ Presentation options තියෙනවා: 🎁✨\n\nඔයා කැමති option එක පහළින් තෝරන්නකෝ 👇",
+  },
+  custom_design: {
+    main_text: "Custom Goldsmithing & Bespoke Design! 💎 අපේ master jeweler ඔබ කැමති ඕනෑම design එකක් Solid 925 Silver වලින් සකස් කරලා දෙන්න සූදානම්. ඔයා ළඟ තියෙන photo එකක් හෝ reference design එකක් මේ chat එකට එවන්න පුළුවන්ද? අපේ designer කෙනෙක් ඉක්මනින්ම සම්බන්ධ වෙයි! ✨",
+  },
+  confirmation: {
+    main_text: "මේ විස්තර ඔක්කොම හරිද? Order එක confirm කරලා proceed කරන්නද? ✨",
+  },
+  agent_handoff: {
+    main_text: "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. අපේ sales specialist කෙනෙක් details confirm කරගන්න ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨",
+  },
+  restart_flow: {
+    main_text: "කිසි ප්‍රශ්නයක් නෑ! 🔄 අපි නැවත මුල සිට තෝරාගනිමු. ඔයා කැමති category එක පහළින් තෝරන්නකෝ 👇",
+  },
+};
+
+export const DEFAULT_FLOW_CONFIG: ChatFlowConfig = {
+  categories: {
+    gemstones: {
+      enabled: true,
+      label: "💎 Gifting Gemstones",
+      budget_tiers: [
+        { label: "🔹 LKR 4,000 – 10,000", min: 4000, max: 10000 },
+        { label: "🔹 LKR 10,000 – 20,000", min: 10000, max: 20000 },
+        { label: "🔹 Above LKR 20,000", min: 20000, max: 100000 },
+      ],
+    },
+    jewelry: {
+      enabled: true,
+      label: "💍 Silver Jewelry (Rings & Pendants)",
+      silver_setting_cost: 5000,
+      budget_tiers: [
+        { label: "🔹 LKR 10,000 – 20,000", min: 10000, max: 20000 },
+        { label: "🔹 LKR 20,000 – 35,000", min: 20000, max: 35000 },
+        { label: "🔹 Above LKR 35,000", min: 35000, max: 150000 },
+      ],
+    },
+    packaging: {
+      enabled: true,
+      label: "🎁 Gift Packaging & Cards",
+    },
+  },
+  steps: { ...DEFAULT_FLOW_STEPS },
+};
+
+export async function loadFlowConfig(supabase: SupabaseClient, userId: string): Promise<ChatFlowConfig> {
+  try {
+    const { data } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "chat_flow_config")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (data?.value && typeof data.value === "object") {
+      const v = data.value as ChatFlowConfig;
+      return {
+        categories: {
+          gemstones: { ...DEFAULT_FLOW_CONFIG.categories!.gemstones, ...v.categories?.gemstones },
+          jewelry: { ...DEFAULT_FLOW_CONFIG.categories!.jewelry, ...v.categories?.jewelry },
+          packaging: { ...DEFAULT_FLOW_CONFIG.categories!.packaging, ...v.categories?.packaging },
+        },
+        steps: {
+          ...DEFAULT_FLOW_STEPS,
+          ...(v.steps || {}),
+        },
+        general_messages: { ...v.general_messages },
+      };
+    }
+  } catch (err) {
+    console.warn("[FlowController] Error loading chat_flow_config:", err);
+  }
+  return {
+    ...DEFAULT_FLOW_CONFIG,
+    steps: { ...DEFAULT_FLOW_STEPS },
+  };
+}
+
+export function getStepMessage(
+  flowConfig: ChatFlowConfig,
+  stepKey: string,
+  placeholders?: Record<string, string | number>
+): string {
+  const stepCfg = flowConfig?.steps?.[stepKey];
+  const defaultCfg = DEFAULT_FLOW_STEPS[stepKey];
+  let text = stepCfg?.main_text?.trim() || defaultCfg?.main_text || "";
+  if (placeholders) {
+    for (const [k, v] of Object.entries(placeholders)) {
+      text = text.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
+    }
+  }
+  const top = stepCfg?.top_message;
+  const bottom = stepCfg?.bottom_message;
+  return withTopBottom(text, top, bottom);
+}
+
+export function withTopBottom(text: string, top?: string, bottom?: string): string {
+  const parts: string[] = [];
+  if (top && top.trim().length > 0) parts.push(top.trim());
+  parts.push(text.trim());
+  if (bottom && bottom.trim().length > 0) parts.push(bottom.trim());
+  return parts.join("\n\n");
+}
+
+export function getCategoryPollOptions(flowConfig: ChatFlowConfig): string[] {
+  const options: string[] = [];
+  if (flowConfig.categories?.gemstones?.enabled !== false) {
+    options.push(flowConfig.categories?.gemstones?.label || "💎 Gifting Gemstones");
+  }
+  if (flowConfig.categories?.jewelry?.enabled !== false) {
+    options.push(flowConfig.categories?.jewelry?.label || "💍 Silver Jewelry (Rings & Pendants)");
+  }
+  if (flowConfig.categories?.packaging?.enabled !== false) {
+    options.push(flowConfig.categories?.packaging?.label || "🎁 Gift Packaging & Cards");
+  }
+  if (options.length === 0) {
+    options.push("💎 Gifting Gemstones", "💍 Silver Jewelry (Rings & Pendants)");
+  }
+  return options;
+}
+
+export function matchBudgetTier(lower: string, tiers: BudgetTier[]): BudgetTier {
+  if (!tiers || tiers.length === 0) {
+    return { label: "Standard Budget", min: 10000, max: 20000 };
+  }
+  for (let i = 0; i < tiers.length; i++) {
+    if (lower === String(i + 1) || lower.startsWith(`${i + 1}️⃣`) || lower.startsWith(String(i + 1))) {
+      return tiers[i];
+    }
+  }
+  for (const t of tiers) {
+    if (lower.includes(t.label.toLowerCase())) {
+      return t;
+    }
+  }
+  if (lower.includes("above") || lower.includes("වැඩි") || lower.includes("over")) {
+    return tiers[tiers.length - 1];
+  }
+  for (const t of tiers) {
+    if (lower.includes(String(t.min)) || (t.max < 100000 && lower.includes(String(t.max)))) {
+      return t;
+    }
+  }
+  return tiers[0];
+}
+
+export function getNotificationRecipients(notifSettings: any): string[] {
+  const val = notifSettings?.value || {};
+  const candidates = [
+    val.phone,
+    val.phone_2,
+    val.phone_3,
+    ...(Array.isArray(val.additional_phones) ? val.additional_phones : []),
+    ...(Array.isArray(val.phones) ? val.phones : []),
+  ];
+  return candidates
+    .map((p) => String(p || "").replace(/\D/g, ""))
+    .filter((p, idx, arr) => p.length >= 9 && arr.indexOf(p) === idx);
+}
+
+export async function sendLeadNotifications(
+  supabase: SupabaseClient,
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  userId: string,
+  notifMessage: string,
+  sessionApiKey: string
+) {
+  try {
+    const { data: notifSettings } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "order_notifications")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const recipients = getNotificationRecipients(notifSettings);
+    console.log(`[FlowController] Dispatching notifications to ${recipients.length} recipients:`, recipients);
+
+    for (const phone of recipients) {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${supabaseServiceKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: phone,
+            message: notifMessage,
+            sessionApiKey,
+          }),
+        });
+      } catch (err) {
+        console.warn(`[FlowController] Failed to send notification to ${phone}:`, err);
+      }
+    }
+  } catch (err) {
+    console.warn("[FlowController] Notification fetch error:", err);
+  }
+}
+
 export async function handleQualificationFlow(
   supabase: SupabaseClient,
   supabaseUrl: string,
@@ -196,6 +497,9 @@ export async function handleQualificationFlow(
 ): Promise<FlowExecutionResult> {
   const cleanText = (messageText || "").trim();
   const lower = cleanText.toLowerCase();
+
+  // Load dynamic flow configuration from Ceylon_gems.settings
+  const flowConfig = await loadFlowConfig(supabase, userId);
 
   // 1. Fetch current lead state from Ceylon_gems.leads
   const { data: leadRow } = await supabase
@@ -260,11 +564,7 @@ export async function handleQualificationFlow(
         replyText: welcomeBackMsg,
         poll: {
           name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
-          options: [
-            "💎 Gifting Gemstones",
-            "💍 Silver Jewelry (Rings & Pendants)",
-            "🎁 Gift Packaging & Cards",
-          ],
+          options: getCategoryPollOptions(flowConfig),
           multipleAnswers: false,
         },
       };
@@ -300,11 +600,7 @@ export async function handleQualificationFlow(
           replyText: "ආයුබෝවන්! 💎 ඔයා කලින් confirm කරපු order එකේ විස්තර අපේ sales specialist සටහන් කරගෙන තියෙන්නේ. ඉක්මනින්ම ඔයාව සම්බන්ධ කරගනීවි. ✨\n\nඅලුතින් තවත් gift එකක් තෝරාගන්න අවශ්‍ය නම්, පහළින් option එකක් තෝරන්නකෝ 👇",
           poll: {
             name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
-            options: [
-              "💎 Gifting Gemstones",
-              "💍 Silver Jewelry (Rings & Pendants)",
-              "🎁 Gift Packaging & Cards",
-            ],
+            options: getCategoryPollOptions(flowConfig),
             multipleAnswers: false,
           },
         };
@@ -324,20 +620,15 @@ export async function handleQualificationFlow(
 
     // If customer asked an FAQ right at the start, answer it along with the gift categories poll
     const initialFaq = matchFaqQuestion(cleanText) || await findFaqInDb(supabase, userId, cleanText);
-    const greetingText = initialFaq
-      ? `${initialFaq}\n\nඅපි ඔයාට ලස්සනම gift එකක් තෝරගන්නත් උදව් කරන්නම්. ✨\nඔයා බලන්න කැමති මොන gift option එකද? පහළින් තෝරන්නකෝ 👇`
-      : "ආයුබෝවන්! 💎 Ceylona Gems & Jewelry වෙත සාදරයෙන් පිළිගන්නවා. අපි ඔයාට ලස්සනම gift එකක් තෝරගන්න උදව් කරන්නම්. ✨\n\nඔයා බලන්න කැමති මොන gift option එකද? පහළින් තෝරන්නකෝ 👇";
+    const greetingMsg = getStepMessage(flowConfig, "greeting");
+    const greetingText = initialFaq ? `${initialFaq}\n\n${greetingMsg}` : greetingMsg;
 
     return {
       handled: true,
       replyText: greetingText,
       poll: {
         name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
-        options: [
-          "💎 Gifting Gemstones",
-          "💍 Silver Jewelry (Rings & Pendants)",
-          "🎁 Gift Packaging & Cards",
-        ],
+        options: getCategoryPollOptions(flowConfig),
         multipleAnswers: false,
       },
     };
@@ -366,38 +657,42 @@ export async function handleQualificationFlow(
     lower === "🎁 gift packaging & cards" ||
     (state.current_step === "CATEGORY_SELECT" && (lower.includes("packaging") || lower.includes("box") || lower.includes("card") || lower === "3"));
 
-  if (isGiftingGemstonesVote) {
+  if (isGiftingGemstonesVote && flowConfig.categories?.gemstones?.enabled !== false) {
     state = {
       category: "Gifting Gemstone",
       current_step: "GEM_BUDGET_SELECT",
     };
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
+    const gemTiers = (flowConfig.categories?.gemstones?.budget_tiers && flowConfig.categories.gemstones.budget_tiers.length > 0)
+      ? flowConfig.categories.gemstones.budget_tiers
+      : DEFAULT_FLOW_CONFIG.categories!.gemstones!.budget_tiers!;
+
+    const replyMsg = getStepMessage(flowConfig, "gem_budget");
+
     return {
       handled: true,
-      replyText: "නියමයි! 💎 අපේ හැම gemstone එකකටම රජයේ ලියාපදිංචි Gem Lab Certificate එකක් ඇතුළත් කරලා තියෙන්නේ (LKR 1,500ක සහතිකයක් මිලටම ඇතුළත්). ✨\n\nඔයා බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+      replyText: replyMsg,
       poll: {
         name: "💰 Gemstone සඳහා Budget Range එක තෝරන්න:",
-        options: [
-          "🔹 LKR 4,000 – 10,000",
-          "🔹 LKR 10,000 – 20,000",
-          "🔹 Above LKR 20,000",
-        ],
+        options: gemTiers.map((t) => t.label),
         multipleAnswers: false,
       },
     };
   }
 
-  if (isSilverJewelryVote) {
+  if (isSilverJewelryVote && flowConfig.categories?.jewelry?.enabled !== false) {
     state = {
       category: "Silver Jewelry",
       current_step: "JEWELRY_TYPE_SELECT",
     };
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
+    const replyMsg = getStepMessage(flowConfig, "jewelry_type");
+
     return {
       handled: true,
-      replyText: "හරිම ලස්සන තේරීමක්! 💍✨ අපේ Silver Jewelry collection එක Solid 925 Silver වලින් master craftsmanship එකෙන් නිර්මාණය කරන්නේ (Handcrafted Silver pieces start from LKR 10,000+).\n\nඔයා කැමති jewelry වර්ගය පහළින් තෝරන්නකෝ 👇",
+      replyText: replyMsg,
       poll: {
         name: "💍 Silver Jewelry වර්ගය තෝරන්න:",
         options: [
@@ -410,16 +705,18 @@ export async function handleQualificationFlow(
     };
   }
 
-  if (isGiftPackagingVote) {
+  if (isGiftPackagingVote && flowConfig.categories?.packaging?.enabled !== false) {
     state = {
       category: "Gift Packaging",
       current_step: "PACKAGING_SELECT",
     };
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
+    const replyMsg = getStepMessage(flowConfig, "packaging_select");
+
     return {
       handled: true,
-      replyText: "අපි ළඟ තෑගි සඳහා විශේෂ Gift Packaging සහ Presentation options තියෙනවා: 🎁✨\n\nඔයා කැමති option එක පහළින් තෝරන්නකෝ 👇",
+      replyText: replyMsg,
       poll: {
         name: "📦 Packaging Option එක තෝරන්න:",
         options: [
@@ -505,7 +802,7 @@ export async function handleQualificationFlow(
 
   if (faqAnswer && !isDirectStepChoice) {
     console.log(`[FlowController] Tangent detected at step ${state.current_step}: "${cleanText}"`);
-    const resumePrompt = getResumePromptForStep(state);
+    const resumePrompt = getResumePromptForStep(state, flowConfig);
     return {
       handled: true,
       replyText: `${faqAnswer}\n\n${resumePrompt.text}`,
@@ -536,26 +833,21 @@ export async function handleQualificationFlow(
   // CATEGORY 1: GIFTING GEMSTONE FLOW
   // --------------------------------------------------------------------------
   if (state.current_step === "GEM_BUDGET_SELECT") {
-    if (lower.includes("above") || lower.includes("වැඩි") || lower.startsWith("3")) {
-      state.budget_tier = "Above LKR 20,000";
-      state.budget_min = 20000;
-      state.budget_max = 150000;
-    } else if (lower.includes("4,000") || lower.includes("4000") || lower.startsWith("1") || (lower.includes("10,000") && !lower.includes("20,000"))) {
-      state.budget_tier = "LKR 4,000 – 10,000";
-      state.budget_min = 4000;
-      state.budget_max = 10000;
-    } else {
-      state.budget_tier = "LKR 10,000 – 20,000";
-      state.budget_min = 10000;
-      state.budget_max = 20000;
-    }
+    const gemTiers = (flowConfig.categories?.gemstones?.budget_tiers && flowConfig.categories.gemstones.budget_tiers.length > 0)
+      ? flowConfig.categories.gemstones.budget_tiers
+      : DEFAULT_FLOW_CONFIG.categories!.gemstones!.budget_tiers!;
+
+    const matched = matchBudgetTier(lower, gemTiers);
+    state.budget_tier = matched.label;
+    state.budget_min = matched.min;
+    state.budget_max = matched.max;
 
     state.current_step = "GEM_COLOR_SELECT";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
     return {
       handled: true,
-      replyText: "Great! 💎 ඔයා කැමති Gemstone එකක් හෝ කැමති Color එකක් තියෙනවද? ✨",
+      replyText: getStepMessage(flowConfig, "gem_color"),
     };
   }
 
@@ -574,9 +866,10 @@ export async function handleQualificationFlow(
       ? `(${cleanText} natural gems stock එකේ නැති වුණත්, අපේ popular Royal Blue, Baby Pink, Ruby Red, Golden Yellow sapphire සහ Purple Amethyst වලින් හොඳම gemstone එකක් තෝරගන්න පුළුවන් ✨)\n\n`
       : "";
 
+    const sizePrompt = getStepMessage(flowConfig, "gem_size");
     return {
       handled: true,
-      replyText: `Super choice! 💎 ${colorNote}ඔයා බලාපොරොත්තු වෙන Gemstone Size එක පහළින් තෝරන්නකෝ 👇`,
+      replyText: colorNote ? `${colorNote}${sizePrompt}` : sizePrompt,
       poll: {
         name: "📏 Gemstone එකේ Size එක තෝරන්න:",
         options: [
@@ -602,7 +895,7 @@ export async function handleQualificationFlow(
 
     return {
       handled: true,
-      replyText: "Perfect! 🎁 මේ special gift එක කාටද දෙන්න හිතන් ඉන්නේ? ඒ වගේම කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ? 📅✨",
+      replyText: getStepMessage(flowConfig, "gem_recipient_date"),
     };
   }
 
@@ -666,9 +959,12 @@ export async function handleQualificationFlow(
 
     const imageUrls = recommendations.flatMap((p) => p.images || []).slice(0, 2);
 
+    const baseReply = `✨ ඔයාගෙ requirements වලට ගැළපෙන අපේ හොඳම Gemstones මෙන්න:\n\n${recLines}\nමේ options වලින් ඔයා වඩාත්ම කැමති piece එක පහළින් තෝරන්නකෝ 👇`;
+    const replyText = withTopBottom(baseReply, flowConfig.categories?.gemstones?.top_message, flowConfig.categories?.gemstones?.bottom_message);
+
     return {
       handled: true,
-      replyText: `✨ ඔයාගෙ requirements වලට ගැළපෙන අපේ හොඳම Gemstones මෙන්න:\n\n${recLines}\nමේ options වලින් ඔයා වඩාත්ම කැමති piece එක පහළින් තෝරන්නකෝ 👇`,
+      replyText,
       poll: {
         name: "💎 ඔබ වඩාත්ම කැමති Gemstone එක තෝරන්න:",
         options: recommendations.map((p, idx) => `${idx + 1}️⃣ ${p.name.substring(0, 25)}`),
@@ -689,23 +985,25 @@ export async function handleQualificationFlow(
 
       return {
         handled: true,
-        replyText: "Solid 925 Silver Rings! 💍 ඔයාගෙ Ring Size එක දන්නවද? ✨",
+        replyText: getStepMessage(flowConfig, "ring_size"),
       };
     } else if (lower.includes("pendant") || lower.includes("පෙන්ඩන්ට්") || lower.includes("2")) {
       state.jewelry_type = "Silver Pendant";
       state.current_step = "JEWELRY_BUDGET_SELECT";
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
+      const jewelryTiers = (flowConfig.categories?.jewelry?.budget_tiers && flowConfig.categories.jewelry.budget_tiers.length > 0)
+        ? flowConfig.categories.jewelry.budget_tiers
+        : DEFAULT_FLOW_CONFIG.categories!.jewelry!.budget_tiers!;
+
+      const replyMsg = getStepMessage(flowConfig, "jewelry_budget");
+
       return {
         handled: true,
-        replyText: "Solid 925 Silver Pendants! ✨ Silver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+        replyText: replyMsg,
         poll: {
           name: "💰 Silver Jewelry Budget Range:",
-          options: [
-            "🔹 LKR 10,000 – 20,000",
-            "🔹 LKR 20,000 – 35,000",
-            "🔹 Above LKR 35,000",
-          ],
+          options: jewelryTiers.map((t) => t.label),
           multipleAnswers: false,
         },
       };
@@ -717,12 +1015,12 @@ export async function handleQualificationFlow(
 
       return {
         handled: true,
-        replyText: "Custom Goldsmithing & Bespoke Design! 💎 අපේ master jeweler කෙනෙක් ඔයාගෙ design එක සහ gemstone mounting ගැන කතා කරන්න සූදානම්. ඔයා බලාපොරොත්තු වෙන design එක සහ budget එක කෙටියෙන් සඳහන් කරන්නකෝ. ✨",
+        replyText: getStepMessage(flowConfig, "custom_design"),
       };
     } else {
       return {
         handled: true,
-        replyText: "ඔයා කැමති jewelry වර්ගය පහළින් තෝරන්නකෝ 👇",
+        replyText: getStepMessage(flowConfig, "jewelry_type"),
         poll: {
           name: "💍 Silver Jewelry වර්ගය තෝරන්න:",
           options: [
@@ -740,37 +1038,12 @@ export async function handleQualificationFlow(
     state.current_step = "QUALIFIED_COMPLETE";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
-    try {
-      const { data: notifSettings } = await supabase
-        .from("settings")
-        .select("value")
-        .eq("key", "order_notifications")
-        .eq("user_id", userId)
-        .single();
-
-      const ownerPhone = notifSettings?.value?.phone;
-      if (ownerPhone) {
-        const notifMessage = `🌟 *NEW CUSTOM DESIGN LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* Custom Goldsmithing / Bespoke\n📝 *Details:* ${cleanText}\n\n👉 *Reply on WhatsApp to assist with custom design!*`;
-        await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${supabaseServiceKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: ownerPhone,
-            message: notifMessage,
-            sessionApiKey,
-          }),
-        });
-      }
-    } catch (err) {
-      console.warn("[FlowController] Owner alert error for custom design:", err);
-    }
+    const notifMessage = `🌟 *NEW CUSTOM DESIGN LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* Custom Goldsmithing / Bespoke\n📝 *Details:* ${cleanText}\n\n👉 *Reply on WhatsApp to assist with custom design!*`;
+    await sendLeadNotifications(supabase, supabaseUrl, supabaseServiceKey, userId, notifMessage, sessionApiKey);
 
     return {
       handled: true,
-      replyText: "බොහොම ස්තූතියි! 💎 ඔයාගෙ custom design request එක අපේ master jeweler ට යොමු කළා. විස්තර confirm කරගන්න අපේ specialist කෙනෙක් ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨",
+      replyText: getStepMessage(flowConfig, "agent_handoff"),
       isQualified: true,
     };
   }
@@ -795,46 +1068,43 @@ export async function handleQualificationFlow(
     state.current_step = "JEWELRY_BUDGET_SELECT";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
+    const jewelryTiers = (flowConfig.categories?.jewelry?.budget_tiers && flowConfig.categories.jewelry.budget_tiers.length > 0)
+      ? flowConfig.categories.jewelry.budget_tiers
+      : DEFAULT_FLOW_CONFIG.categories!.jewelry!.budget_tiers!;
+
     const sizeNote = isUnknownSize
-      ? "කිසිම ප්‍රශ්නයක් නෑ! 💍 අපේ silver rings standard adjustable sizes වලිනුත් ලබාගන්න පුළුවන්, ඒ වගේම අපේ specialist ඔයාට ring size එක මැනගන්න guide එකක් ලබාදෙයි. ✨"
-      : `Ring Size: ${cleanText} සටහන් කරගත්තා! 💍`;
+      ? "කිසිම ප්‍රශ්නයක් නෑ! 💍 අපේ silver rings standard adjustable sizes වලිනුත් ලබාගන්න පුළුවන්, ඒ වගේම අපේ specialist ඔයාට ring size එක මැනගන්න guide එකක් ලබාදෙයි. ✨\n\n"
+      : `Ring Size: ${cleanText} සටහන් කරගත්තා! 💍\n\n`;
+
+    const budgetMsg = getStepMessage(flowConfig, "jewelry_budget");
 
     return {
       handled: true,
-      replyText: `${sizeNote}\n\nSilver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇`,
+      replyText: `${sizeNote}${budgetMsg}`,
       poll: {
         name: "💰 Silver Jewelry Budget Range:",
-        options: [
-          "🔹 LKR 10,000 – 20,000",
-          "🔹 LKR 20,000 – 35,000",
-          "🔹 Above LKR 35,000",
-        ],
+        options: jewelryTiers.map((t) => t.label),
         multipleAnswers: false,
       },
     };
   }
 
   if (state.current_step === "JEWELRY_BUDGET_SELECT") {
-    if (lower.includes("above") || lower.includes("වැඩි") || lower.startsWith("3")) {
-      state.budget_tier = "Above LKR 35,000";
-      state.budget_min = 35000;
-      state.budget_max = 150000;
-    } else if (lower.includes("10,000") || lower.includes("10000") || lower.startsWith("1")) {
-      state.budget_tier = "LKR 10,000 – 20,000";
-      state.budget_min = 10000;
-      state.budget_max = 20000;
-    } else {
-      state.budget_tier = "LKR 20,000 – 35,000";
-      state.budget_min = 20000;
-      state.budget_max = 35000;
-    }
+    const jewelryTiers = (flowConfig.categories?.jewelry?.budget_tiers && flowConfig.categories.jewelry.budget_tiers.length > 0)
+      ? flowConfig.categories.jewelry.budget_tiers
+      : DEFAULT_FLOW_CONFIG.categories!.jewelry!.budget_tiers!;
+
+    const matched = matchBudgetTier(lower, jewelryTiers);
+    state.budget_tier = matched.label;
+    state.budget_min = matched.min;
+    state.budget_max = matched.max;
 
     state.current_step = "JEWELRY_COLOR_SELECT";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
     return {
       handled: true,
-      replyText: "හරිම හොඳයි! ✨ Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Pink Sapphire, Ruby, Amethyst, Green Tsavorite, etc.)",
+      replyText: getStepMessage(flowConfig, "jewelry_color"),
     };
   }
 
@@ -846,7 +1116,7 @@ export async function handleQualificationFlow(
 
     return {
       handled: true,
-      replyText: "Super! 🎁 මේ jewelry gift එක කාටද දෙන්න හිතන් ඉන්නේ? ඒ වගේම කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ? 📅✨",
+      replyText: getStepMessage(flowConfig, "jewelry_recipient_date"),
     };
   }
 
@@ -913,19 +1183,23 @@ export async function handleQualificationFlow(
 
     const isRing = (state.jewelry_type || "").includes("Ring");
     const settingLabel = isRing ? "Solid 925 Silver Ring Setting" : "Solid 925 Silver Setting";
+    const silverSettingCost = flowConfig.categories?.jewelry?.silver_setting_cost || 5000;
 
     const recLines = recommendations.map((p, idx) => {
       const gemPrice = p.price || 10000;
-      return `${idx + 1}️⃣ *${p.name}*\n💎 Gemstone Price: LKR ${gemPrice.toLocaleString()}\n💍 ${settingLabel}: ~LKR 5,000 ක පමණ (Design එක අනුව vary වේ)\n📜 Government-Registered Gem Lab Certificate Included\n`;
+      return `${idx + 1}️⃣ *${p.name}*\n💎 Gemstone Price: LKR ${gemPrice.toLocaleString()}\n💍 ${settingLabel}: ~LKR ${silverSettingCost.toLocaleString()} ක පමණ (Design එක අනුව vary වේ)\n📜 Government-Registered Gem Lab Certificate Included\n`;
     }).join("\n");
 
-    const disclaimNote = "ℹ️ *සැලකිය යුතුයි:* ඉහත දක්වා ඇත්තේ Gemstone එකෙහි මිල වන අතර, Silver Setting සඳහා design එක අනුව LKR 5,000 ක පමණ මුදලක් vary විය හැක. ඔබ කැමති design එකට අදාළ සම්පූර්ණ අවසන් මිල අපේ sales agent ඔබ සමඟ confirm කරනු ඇත.\n\n";
+    const disclaimNote = `${getStepMessage(flowConfig, "silver_disclaimer", { cost: silverSettingCost.toLocaleString() })}\n\n`;
 
     const imageUrls = recommendations.flatMap((p) => p.images || []).slice(0, 2);
 
+    const baseReply = `✨ ඔයාගෙ requirements වලට ගැළපෙන අපේ Silver Jewelry pieces මෙන්න:\n\n${recLines}\n${disclaimNote}මේ options වලින් ඔබ වඩාත්ම කැමති piece එක පහළින් තෝරන්නකෝ 👇`;
+    const replyText = withTopBottom(baseReply, flowConfig.categories?.jewelry?.top_message, flowConfig.categories?.jewelry?.bottom_message);
+
     return {
       handled: true,
-      replyText: `✨ ඔයාගෙ requirements වලට ගැළපෙන අපේ Silver Jewelry pieces මෙන්න:\n\n${recLines}\n${disclaimNote}මේ options වලින් ඔබ වඩාත්ම කැමති piece එක පහළින් තෝරන්නකෝ 👇`,
+      replyText,
       poll: {
         name: "💍 වඩාත්ම කැමති Jewelry Piece එක තෝරන්න:",
         options: recommendations.map((p, idx) => `${idx + 1}️⃣ ${p.name.substring(0, 25)}`),
@@ -945,7 +1219,7 @@ export async function handleQualificationFlow(
 
     return {
       handled: true,
-      replyText: `Packaging selection: ${cleanText}! 📦✨\n\nමේ gift packaging එක කාටද දෙන්න හිතන් ඉන්නේ? ඒ වගේම කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ? 📅🎁`,
+      replyText: `Packaging selection: ${cleanText}! 📦✨\n\n${getStepMessage(flowConfig, "gem_recipient_date")}`,
     };
   }
 
@@ -1029,21 +1303,31 @@ export async function handleQualificationFlow(
 
     const isJewelry = state.category === "Silver Jewelry" || !!state.jewelry_type;
     const gemPrice = selectedProduct.price || 10000;
+    const silverSettingCost = flowConfig.categories?.jewelry?.silver_setting_cost || 5000;
 
     let priceSection = "";
     let noteSection = "";
     if (isJewelry) {
       const isRing = (state.jewelry_type || "").includes("Ring");
       const settingLabel = isRing ? "Solid 925 Silver Ring Setting" : "Solid 925 Silver Setting";
-      priceSection = `💎 *Gemstone Price:* LKR ${gemPrice.toLocaleString()}\n💍 *${settingLabel}:* ~LKR 5,000 ක පමණ (Design එක අනුව vary වේ)\n`;
+      priceSection = `💎 *Gemstone Price:* LKR ${gemPrice.toLocaleString()}\n💍 *${settingLabel}:* ~LKR ${silverSettingCost.toLocaleString()} ක පමණ (Design එක අනුව vary වේ)\n`;
       noteSection = `\nℹ️ *සැලකිය යුතුයි:* ඔබ තෝරාගන්නා design එක අනුව සම්පූර්ණ අවසන් මිල අපේ sales agent confirm කරනු ඇත.\n`;
     } else {
       priceSection = `💰 *Price:* LKR ${gemPrice.toLocaleString()}\n`;
     }
 
+    const confirmPrompt = getStepMessage(flowConfig, "confirmation");
+    const baseConfirmReply = `✨ *ඔබ තෝරාගත් අයිතමය:*\n💎 *${selectedProduct.name}*\n${state.jewelry_type ? `💍 *Jewelry Type:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Ring Size:* ${state.ring_size}\n` : ""}${state.size ? `📏 *Size:* ${state.size}\n` : ""}${priceSection}📜 *Gem Lab Certificate:* Included (Worth LKR 1,500)\n🎁 *Recipient:* ${state.gift_recipient || "Special Gift"}\n📅 *Needed By:* ${state.required_date || "Confirmed with Agent"}\n${noteSection}\n${confirmPrompt}`;
+
+    const replyText = withTopBottom(
+      baseConfirmReply,
+      flowConfig.steps?.confirmation?.top_message || flowConfig.general_messages?.confirmation_top_message,
+      flowConfig.steps?.confirmation?.bottom_message || flowConfig.general_messages?.confirmation_bottom_message
+    );
+
     return {
       handled: true,
-      replyText: `✨ *ඔබ තෝරාගත් අයිතමය:*\n💎 *${selectedProduct.name}*\n${state.jewelry_type ? `💍 *Jewelry Type:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Ring Size:* ${state.ring_size}\n` : ""}${state.size ? `📏 *Size:* ${state.size}\n` : ""}${priceSection}📜 *Gem Lab Certificate:* Included (Worth LKR 1,500)\n🎁 *Recipient:* ${state.gift_recipient || "Special Gift"}\n📅 *Needed By:* ${state.required_date || "Confirmed with Agent"}\n${noteSection}\nමේ විස්තර ඔක්කොම හරිද? Order එක confirm කරලා proceed කරන්නද? ✨`,
+      replyText,
       poll: {
         name: "✨ Confirm කරලා proceed කරන්නද?",
         options: [
@@ -1064,8 +1348,9 @@ export async function handleQualificationFlow(
       const prod = state.selected_product || { name: state.gemstone_type || "Ceylon Gem", price: state.budget_min || 10000 };
       const actualPrice = prod.price || state.budget_min || 10000;
       const isJewelry = state.category === "Silver Jewelry" || !!state.jewelry_type;
+      const silverSettingCost = flowConfig.categories?.jewelry?.silver_setting_cost || 5000;
       const priceDescription = isJewelry
-        ? `LKR ${actualPrice.toLocaleString()} (Gemstone) + ~LKR 5,000 (Silver Setting - to be confirmed by agent)`
+        ? `LKR ${actualPrice.toLocaleString()} (Gemstone) + ~LKR ${silverSettingCost.toLocaleString()} (Silver Setting - to be confirmed by agent)`
         : `LKR ${actualPrice.toLocaleString()}`;
 
       const instructions = [
@@ -1115,39 +1400,17 @@ export async function handleQualificationFlow(
         custom_fields: { flow_state: state, is_qualified: true, handed_off_at: state.handed_off_at },
       }, { onConflict: "user_id,phone_number" });
 
-      // Send owner notification alert
-      try {
-        const { data: notifSettings } = await supabase
-          .from("settings")
-          .select("value")
-          .eq("key", "order_notifications")
-          .eq("user_id", userId)
-          .single();
+      // Send owner & team notification alerts (multi-phone support)
+      const notifMessage = `🌟 *NEW QUALIFIED LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* ${state.category}\n🛍️ *Item:* ${prod.name}\n${state.jewelry_type ? `💍 *Jewelry:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Size:* ${state.ring_size}\n` : ""}💰 *Budget:* ${state.budget_tier || "N/A"}\n🎁 *Recipient:* ${state.gift_recipient}\n📅 *Needed By:* ${state.required_date}\n💵 *Price Details:* ${priceDescription}\n\n👉 *Reply on WhatsApp to finalize!*`;
 
-        const ownerPhone = notifSettings?.value?.phone;
-        if (ownerPhone) {
-          const notifMessage = `🌟 *NEW QUALIFIED LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* ${state.category}\n🛍️ *Item:* ${prod.name}\n${state.jewelry_type ? `💍 *Jewelry:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Size:* ${state.ring_size}\n` : ""}💰 *Budget:* ${state.budget_tier || "N/A"}\n🎁 *Recipient:* ${state.gift_recipient}\n📅 *Needed By:* ${state.required_date}\n💵 *Price Details:* ${priceDescription}\n\n👉 *Reply on WhatsApp to finalize!*`;
+      await sendLeadNotifications(supabase, supabaseUrl, supabaseServiceKey, userId, notifMessage, sessionApiKey);
 
-          await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${supabaseServiceKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              to: ownerPhone,
-              message: notifMessage,
-              sessionApiKey,
-            }),
-          });
-        }
-      } catch (err) {
-        console.warn("[FlowController] Owner alert error:", err);
-      }
-
-      const replyConfirm = isJewelry
+      const defaultReply = isJewelry
         ? "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. ඔබ තෝරාගන්නා design එකට අදාළ silver setting සහ සම්පූර්ණ අවසන් මිල confirm කරගන්න අපේ sales specialist කෙනෙක් ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨"
         : "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. අපේ sales specialist කෙනෙක් details confirm කරගන්න ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨";
+
+      const configuredHandoff = getStepMessage(flowConfig, "agent_handoff");
+      const replyConfirm = configuredHandoff || flowConfig.general_messages?.handoff_message?.trim() || defaultReply;
 
       return {
         handled: true,
@@ -1161,14 +1424,10 @@ export async function handleQualificationFlow(
 
       return {
         handled: true,
-        replyText: "කිසි ප්‍රශ්නයක් නෑ! 🔄 අපි නැවත මුල සිට තෝරාගනිමු. ඔයා කැමති category එක පහළින් තෝරන්නකෝ 👇",
+        replyText: getStepMessage(flowConfig, "restart_flow"),
         poll: {
           name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
-          options: [
-            "💎 Gifting Gemstones",
-            "💍 Silver Jewelry (Rings & Pendants)",
-            "🎁 Gift Packaging & Cards",
-          ],
+          options: getCategoryPollOptions(flowConfig),
           multipleAnswers: false,
         },
       };
@@ -1223,59 +1482,55 @@ function isStepMatchingInput(step: string, text: string): boolean {
 // ----------------------------------------------------------------------------
 // Helper: Generate Return-to-Flow transition text and poll
 // ----------------------------------------------------------------------------
-export function getResumePromptForStep(state: LeadFlowState): { text: string; poll?: FlowPoll } {
+export function getResumePromptForStep(state: LeadFlowState, flowConfig?: ChatFlowConfig): { text: string; poll?: FlowPoll } {
+  const cfg = flowConfig || DEFAULT_FLOW_CONFIG;
   switch (state.current_step) {
     case "CATEGORY_SELECT":
       return {
-        text: "දැන් අපි ඔයාගෙ gift එක තෝරගමු! ඔයා කැමති category එක පහළින් තෝරන්නකෝ 👇",
+        text: getStepMessage(cfg, "greeting"),
         poll: {
           name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
-          options: [
-            "💎 Gifting Gemstones",
-            "💍 Silver Jewelry (Rings & Pendants)",
-            "🎁 Gift Packaging & Cards",
-          ],
+          options: getCategoryPollOptions(cfg),
           multipleAnswers: false,
         },
       };
-    case "GEM_BUDGET_SELECT":
+    case "GEM_BUDGET_SELECT": {
+      const gemTiers = cfg.categories?.gemstones?.budget_tiers || DEFAULT_FLOW_CONFIG.categories!.gemstones!.budget_tiers!;
       return {
-        text: "දැන් ඔයාගෙ gemstone එකට budget range එක තෝරන්නකෝ 👇",
+        text: getStepMessage(cfg, "gem_budget"),
         poll: {
           name: "💰 Gemstone සඳහා Budget Range එක තෝරන්න:",
-          options: [
-            "🔹 LKR 4,000 – 10,000",
-            "🔹 LKR 10,000 – 20,000",
-            "🔹 Above LKR 20,000",
-          ],
+          options: gemTiers.map((t) => t.label),
           multipleAnswers: false,
         },
       };
-    case "JEWELRY_BUDGET_SELECT":
+    }
+    case "JEWELRY_BUDGET_SELECT": {
+      const jewelryTiers = cfg.categories?.jewelry?.budget_tiers || DEFAULT_FLOW_CONFIG.categories!.jewelry!.budget_tiers!;
       return {
-        text: "දැන් Silver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක තෝරන්නකෝ 👇",
+        text: getStepMessage(cfg, "jewelry_budget"),
         poll: {
           name: "💰 Silver Jewelry Budget Range:",
-          options: [
-            "🔹 LKR 10,000 – 20,000",
-            "🔹 LKR 20,000 – 35,000",
-            "🔹 Above LKR 35,000",
-          ],
+          options: jewelryTiers.map((t) => t.label),
           multipleAnswers: false,
         },
       };
+    }
     case "RING_SIZE_SELECT":
       return {
-        text: "Solid 925 Silver Rings සඳහා ඔයාගෙ Ring Size එක කියන්නකෝ (උදා: US 6, 7, 8 හෝ 'දන්නේ නෑ' කියලා කියන්න පුළුවන්) 💍✨",
+        text: getStepMessage(cfg, "ring_size"),
       };
     case "GEM_COLOR_SELECT":
+      return {
+        text: getStepMessage(cfg, "gem_color"),
+      };
     case "JEWELRY_COLOR_SELECT":
       return {
-        text: "Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Pink Sapphire, Ruby, Amethyst, etc.)",
+        text: getStepMessage(cfg, "jewelry_color"),
       };
     case "GEM_SIZE_SELECT":
       return {
-        text: "ඔයා බලාපොරොත්තු වෙන Gemstone Size එක පහළින් තෝරන්නකෝ 👇",
+        text: getStepMessage(cfg, "gem_size"),
         poll: {
           name: "📏 Gemstone එකේ Size එක තෝරන්න:",
           options: [
@@ -1289,7 +1544,7 @@ export function getResumePromptForStep(state: LeadFlowState): { text: string; po
       };
     case "JEWELRY_TYPE_SELECT":
       return {
-        text: "ඔබ කැමති Silver Jewelry වර්ගය පහළින් තෝරන්නකෝ 👇",
+        text: getStepMessage(cfg, "jewelry_type"),
         poll: {
           name: "💍 Silver Jewelry වර්ගය තෝරන්න:",
           options: [
@@ -1299,6 +1554,19 @@ export function getResumePromptForStep(state: LeadFlowState): { text: string; po
           ],
           multipleAnswers: false,
         },
+      };
+    case "GEM_RECIPIENT_AND_DATE":
+      return {
+        text: getStepMessage(cfg, "gem_recipient_date"),
+      };
+    case "JEWELRY_RECIPIENT_AND_DATE":
+      return {
+        text: getStepMessage(cfg, "jewelry_recipient_date"),
+      };
+    case "PACKAGING_SELECT":
+      return {
+        text: getStepMessage(cfg, "packaging_select"),
+      };
       };
     case "GEM_RECIPIENT_AND_DATE":
     case "JEWELRY_RECIPIENT_AND_DATE":

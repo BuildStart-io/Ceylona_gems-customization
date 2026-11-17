@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { transcribeAudio } from "./transcribe.ts";
-import { handleQualificationFlow, getResumePromptForStep } from "./qualificationFlow.ts";
+import { handleQualificationFlow, getResumePromptForStep, loadFlowConfig } from "./qualificationFlow.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -509,7 +509,8 @@ async function processMessage(
       currentFlowState.current_step !== "HANDED_OFF" &&
       !activeLead?.custom_fields?.is_qualified
     ) {
-      const resume = getResumePromptForStep(currentFlowState);
+      const flowConfig = await loadFlowConfig(supabase, userId);
+      const resume = getResumePromptForStep(currentFlowState, flowConfig);
       if (resume?.poll) {
         console.log(`[${corrId}] Returning to qualification flow step ${currentFlowState.current_step} with poll`);
         await sendWhatsAppPoll(supabaseUrl, supabaseServiceKey, phoneNumber, resume.poll, sessionApiKey);

@@ -12,6 +12,20 @@ interface ConversationMessage {
   created_at: string;
 }
 
+function getNotificationRecipients(notifSettings: any): string[] {
+  const val = notifSettings?.value || {};
+  const candidates = [
+    val.phone,
+    val.phone_2,
+    val.phone_3,
+    ...(Array.isArray(val.additional_phones) ? val.additional_phones : []),
+    ...(Array.isArray(val.phones) ? val.phones : []),
+  ];
+  return candidates
+    .map((p) => String(p || "").replace(/\D/g, ""))
+    .filter((p, idx, arr) => p.length >= 9 && arr.indexOf(p) === idx);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -654,7 +668,7 @@ CRITICAL SECURITY RULES:
               console.log("Order saved successfully:", orderResult.id);
               orderCreated = true;
 
-              // Send order notification to owner
+              // Send order notification to owner(s)
               try {
                 const { data: notifSettings } = await supabase
                   .from("settings")
@@ -663,8 +677,8 @@ CRITICAL SECURITY RULES:
                   .eq("user_id", userId)
                   .single();
 
-                const ownerPhone = notifSettings?.value?.phone;
-                if (ownerPhone) {
+                const recipients = getNotificationRecipients(notifSettings);
+                if (recipients.length > 0) {
                   const items = (orderData.order_items || [])
                     .map((item: any) => `${item.quantity}x ${item.name}`)
                     .join(", ");
@@ -682,22 +696,28 @@ CRITICAL SECURITY RULES:
                     sendApiKey = sessionData?.session_api_key || null;
                   }
 
-                  const sendNotif = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${supabaseServiceKey}`,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      to: ownerPhone,
-                      message: notifMessage,
-                      sessionApiKey: sendApiKey,
-                    }),
-                  });
-                  if (!sendNotif.ok) {
-                    console.error("Failed to send owner notification:", await sendNotif.text());
-                  } else {
-                    console.log("Owner notification sent to", ownerPhone);
+                  for (const recipient of recipients) {
+                    try {
+                      const sendNotif = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+                        method: "POST",
+                        headers: {
+                          Authorization: `Bearer ${supabaseServiceKey}`,
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          to: recipient,
+                          message: notifMessage,
+                          sessionApiKey: sendApiKey,
+                        }),
+                      });
+                      if (!sendNotif.ok) {
+                        console.error("Failed to send owner notification to", recipient, await sendNotif.text());
+                      } else {
+                        console.log("Owner notification sent to", recipient);
+                      }
+                    } catch (e) {
+                      console.warn("Failed sending order notification to", recipient, e);
+                    }
                   }
                 }
               } catch (notifError) {
@@ -928,8 +948,8 @@ CRITICAL SECURITY RULES:
                 .eq("user_id", userId)
                 .single();
 
-              const ownerPhone = notifSettings?.value?.phone;
-              if (ownerPhone) {
+              const recipients = getNotificationRecipients(notifSettings);
+              if (recipients.length > 0) {
                 const notifMessage = `🌟 *NEW QUALIFIED LEAD!*\n\n👤 *Customer:* ${custName}\n📱 *Phone:* ${custPhone}\n💎 *Category:* ${category}\n🔹 *Item/Gem:* ${gemstoneType || interestedProduct}\n📏 *Size:* ${size || "N/A"}\n💰 *Budget:* ${budget || "N/A"}\n🎁 *Recipient:* ${giftRecipient || "N/A"}\n📅 *Required Date:* ${requiredDate || "N/A"}\n💵 *Price:* LKR ${actualPrice.toLocaleString()}\n📦 *Packaging:* ${packagingRequested || "N/A"}\n\n👉 *Reply directly on WhatsApp to close this sale!*`;
 
                 let sendApiKey = sessionApiKey || null;
@@ -943,19 +963,25 @@ CRITICAL SECURITY RULES:
                   sendApiKey = sessionData?.session_api_key || null;
                 }
 
-                await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${supabaseServiceKey}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    to: ownerPhone,
-                    message: notifMessage,
-                    sessionApiKey: sendApiKey,
-                  }),
-                });
-                console.log("Owner notification sent to", ownerPhone);
+                for (const recipient of recipients) {
+                  try {
+                    await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+                      method: "POST",
+                      headers: {
+                        Authorization: `Bearer ${supabaseServiceKey}`,
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        to: recipient,
+                        message: notifMessage,
+                        sessionApiKey: sendApiKey,
+                      }),
+                    });
+                    console.log("Owner notification sent to", recipient);
+                  } catch (e) {
+                    console.warn("Failed sending lead notification to", recipient, e);
+                  }
+                }
               }
             } catch (notifErr) {
               console.warn("Error sending owner lead notification:", notifErr);

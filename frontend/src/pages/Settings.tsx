@@ -11,9 +11,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, MessageSquare, CreditCard, Copy, Check, Smartphone, RefreshCw, Wifi, WifiOff, Plus, Trash2, ArrowUp, ArrowDown, GripVertical, Clock, Lock } from "lucide-react";
+import { Loader2, Save, MessageSquare, CreditCard, Copy, Check, Smartphone, RefreshCw, Wifi, WifiOff, Plus, Trash2, ArrowUp, ArrowDown, GripVertical, Clock, Lock, Sliders } from "lucide-react";
 import WelcomeMediaUpload from "@/components/settings/WelcomeMediaUpload";
 import StaffManager from "@/components/settings/StaffManager";
+import ChatFlowSettings from "@/components/settings/ChatFlowSettings";
 import { useStaffAccess } from "@/hooks/useStaffAccess";
 import { useEffectivePlan } from "@/hooks/useEffectivePlan";
 
@@ -91,6 +92,8 @@ export default function Settings() {
 
   // Order Notifications
   const [notificationPhone, setNotificationPhone] = useState("");
+  const [notificationPhone2, setNotificationPhone2] = useState("");
+  const [notificationPhone3, setNotificationPhone3] = useState("");
 
   // Order Follow-up Message
   const [orderFollowupMessage, setOrderFollowupMessage] = useState("");
@@ -179,9 +182,13 @@ export default function Settings() {
           case "auto_responses":
             setAutoResponsesEnabled((setting.value as any)?.enabled ?? true);
             break;
-          case "order_notifications":
-            setNotificationPhone((setting.value as any)?.phone || "");
+          case "order_notifications": {
+            const notifVal = setting.value as any;
+            setNotificationPhone(notifVal?.phone || "");
+            setNotificationPhone2(notifVal?.phone_2 || notifVal?.additional_phones?.[0] || "");
+            setNotificationPhone3(notifVal?.phone_3 || notifVal?.additional_phones?.[1] || "");
             break;
+          }
           case "delivery_settings":
             setFreeDeliveryThreshold((setting.value as any)?.free_delivery_threshold || 0);
             break;
@@ -563,7 +570,12 @@ export default function Settings() {
   };
 
   const handleSaveNotifications = () => {
-    saveSettings("order_notifications", { phone: notificationPhone });
+    saveSettings("order_notifications", {
+      phone: notificationPhone.trim(),
+      phone_2: notificationPhone2.trim(),
+      phone_3: notificationPhone3.trim(),
+      additional_phones: [notificationPhone2.trim(), notificationPhone3.trim()].filter(Boolean),
+    });
   };
 
   const handleSaveOrderFollowup = () => {
@@ -629,6 +641,7 @@ export default function Settings() {
           <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="whatsapp" className="flex-1 sm:flex-initial">WhatsApp</TabsTrigger>
             <TabsTrigger value="chatbot" className="flex-1 sm:flex-initial">Chatbot</TabsTrigger>
+            <TabsTrigger value="flow" className="flex-1 sm:flex-initial">Chat Flow</TabsTrigger>
             <TabsTrigger value="payment" className="flex-1 sm:flex-initial">Payment</TabsTrigger>
             <TabsTrigger value="delivery" className="flex-1 sm:flex-initial">Delivery</TabsTrigger>
             <TabsTrigger value="staff" className="flex-1 sm:flex-initial">Staff</TabsTrigger>
@@ -1143,20 +1156,20 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            {/* Order Notifications */}
+            {/* Order & Lead Notifications (Up to 3 numbers) */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Smartphone className="h-5 w-5" />
-                  Order Notifications
+                  Order & Lead Notifications
                 </CardTitle>
                 <CardDescription>
-                  Receive WhatsApp notifications when a new order is placed
+                  Receive WhatsApp notifications when a new order or qualified lead is captured (Supports up to 3 numbers)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="notification-phone">Your WhatsApp Number</Label>
+                  <Label htmlFor="notification-phone">Primary WhatsApp Number</Label>
                   <Input
                     id="notification-phone"
                     value={notificationPhone}
@@ -1164,9 +1177,37 @@ export default function Settings() {
                     placeholder="e.g., 94771234567"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Enter your phone number with country code (no + or spaces). You'll receive order details here when a customer places an order.
+                    Main recipient for orders & qualified lead alerts (country code included, no + or spaces).
                   </p>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-phone-2">Secondary WhatsApp Number (Optional)</Label>
+                    <Input
+                      id="notification-phone-2"
+                      value={notificationPhone2}
+                      onChange={(e) => setNotificationPhone2(e.target.value)}
+                      placeholder="e.g., 94719876543"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Additional staff or team member number
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-phone-3">Third WhatsApp Number (Optional)</Label>
+                    <Input
+                      id="notification-phone-3"
+                      value={notificationPhone3}
+                      onChange={(e) => setNotificationPhone3(e.target.value)}
+                      placeholder="e.g., 94761234567"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Manager or backup notification number
+                    </p>
+                  </div>
+                </div>
+
                 <Button onClick={handleSaveNotifications} disabled={saving}>
                   {saving ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1177,6 +1218,11 @@ export default function Settings() {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Interactive Chat Flow Configuration Tab */}
+          <TabsContent value="flow" className="space-y-6">
+            <ChatFlowSettings />
           </TabsContent>
 
           <TabsContent value="payment" className="space-y-6">
