@@ -1567,19 +1567,13 @@ export function getResumePromptForStep(state: LeadFlowState, flowConfig?: ChatFl
       return {
         text: getStepMessage(cfg, "packaging_select"),
       };
-      };
-    case "GEM_RECIPIENT_AND_DATE":
-    case "JEWELRY_RECIPIENT_AND_DATE":
-      return {
-        text: "මේ gift එක කාටද දෙන්න හිතන් ඉන්නේ? ඒ වගේම කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ? 🎁📅",
-      };
     case "PRODUCT_SELECTION":
       return {
         text: "ඉහත recommendations වලින් ඔබ කැමති piece එක තෝරන්නකෝ 👇",
       };
     case "CONFIRMATION":
       return {
-        text: "ඔබ තෝරාගත් piece එක confirm කරලා proceed කරන්නද? 👇",
+        text: getStepMessage(cfg, "confirmation"),
         poll: {
           name: "✨ Confirm කරලා proceed කරන්නද?",
           options: [
@@ -1658,25 +1652,48 @@ async function fetchConfiguredRecommendations(
 
     if (pool.length === 0) pool = allProducts;
 
-    // Score by color/gemstone match and budget
-    const cleanColor = colorKeyword.toLowerCase();
+    // Check if budget is in the expensive range (LKR 20,000 - 25,000+ or budgetMin >= 20000)
+    const isExpensiveBudget = budgetMin >= 20000 || (budgetMin + budgetMax) / 2 >= 20000;
+
+    // Score by tier priority, color/gemstone match, and budget
+    const cleanColor = (colorKeyword || "").toLowerCase().trim();
     const scored = pool.map((p: any) => {
       let score = 0;
-      const pName = p.name.toLowerCase();
+      const pName = (p.name || "").toLowerCase();
       const pDesc = (p.description || "").toLowerCase();
+      const pPrice = Number(p.price) || 0;
+      const pTier = p.tier || (pPrice >= 20000 ? "expensive" : "most_sellers");
+
+      // Tier Priority:
+      // When customer chooses an expensive budget (20,000 - 25,000+), suggest 'expensive' products FIRST.
+      // For standard budget, suggest 'most_sellers' products.
+      if (isExpensiveBudget) {
+        if (pTier === "expensive") {
+          score += 50;
+        } else {
+          score += 5; // fallback
+        }
+      } else {
+        if (pTier === "most_sellers") {
+          score += 40;
+        } else {
+          score -= 20; // deprioritize expensive products for standard budgets
+        }
+      }
 
       // High priority for color/gemstone match
       if (cleanColor && cleanColor.length >= 3 && (pName.includes(cleanColor) || pDesc.includes(cleanColor))) {
-        score += 25;
+        score += 30;
       }
-      // High priority for budget match
-      if (p.price >= budgetMin && p.price <= budgetMax) {
-        score += 15;
+
+      // Proximity to budget
+      if (pPrice >= budgetMin && pPrice <= budgetMax) {
+        score += 20;
       } else {
         // Penalty for being outside target budget bracket
         const midpoint = (budgetMin + budgetMax) / 2;
-        const diff = Math.abs(p.price - midpoint);
-        score -= Math.min(10, Math.floor(diff / 2000));
+        const diff = Math.abs(pPrice - midpoint);
+        score -= Math.min(15, Math.floor(diff / 2000));
       }
       return { product: p, score };
     });

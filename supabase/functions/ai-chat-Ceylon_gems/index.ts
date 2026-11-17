@@ -135,7 +135,9 @@ serve(async (req) => {
     const freeDeliveryThreshold = deliverySettings.free_delivery_threshold || 0;
 
     const productCatalog = products.map(p => {
-      let line = `- ${p.name}: Base price LKR ${p.price} (${p.product_type})`;
+      const pTier = p.tier || (p.price >= 20000 ? "expensive" : "most_sellers");
+      const tierTag = pTier === "expensive" ? "[TIER: Expensive / Premium (LKR 20,000+)]" : "[TIER: Most Sellers (Standard / Popular)]";
+      let line = `- ${p.name}: Base price LKR ${p.price} (${p.product_type}) ${tierTag}`;
       if (p.product_type === "physical" && p.delivery_price && p.delivery_price > 0) {
         line += ` | Delivery fee: LKR ${p.delivery_price}`;
       }
@@ -337,6 +339,10 @@ MANDATORY STEP-BY-STEP QUALIFICATION PROGRESSION:
    • Step 6 (Product Recommendations):
      Once Budget, Gemstone/Color, Size, Recipient, and Required Date are ALL collected:
      Filter catalog and suggest matching configured gemstones (1 to 3 items based strictly on available catalog stones).
+     TIER RECOMMENDATION POLICY:
+     - If customer requested budget of LKR 20,000–25,000+, Above LKR 20,000, or seeks luxury/high-end options, prioritize and recommend items marked [TIER: Expensive / Premium (LKR 20,000+)] FIRST!
+     - If customer selected standard budget (< LKR 20,000), prioritize items marked [TIER: Most Sellers (Standard / Popular)].
+     - If no exact tier matches customer's criteria/color, smoothly recommend closest matching catalog gemstone so recommendations are never empty.
      Use the EXACT name from the catalog (e.g. "Tourmaline", "Rose Pearl") and EXACT catalog price (e.g. LKR 10,450).
      NEVER invent unlisted gemstones (e.g. NEVER suggest Rose Quartz, Pink Sapphire, etc.). If only 1 stone matches the requested color, suggest ONLY that 1 stone!
      Include registered gem lab certificate included notice (worth LKR 1,500 included in price).
@@ -395,6 +401,10 @@ MANDATORY STEP-BY-STEP QUALIFICATION PROGRESSION:
    • Step 7 (Suggest Matching Silver Jewelry Options - MANDATORY):
      Once all details are collected:
      Suggest matching configured silver options from available catalog gemstones (1 to 3 options based strictly on catalog availability).
+     TIER RECOMMENDATION POLICY:
+     - If customer selected budget of LKR 20,000–35,000, Above LKR 35,000, or 20,000–25,000+, prioritize gemstones marked [TIER: Expensive / Premium (LKR 20,000+)] for the setting FIRST!
+     - For standard budgets (LKR 10,000–20,000), prioritize gemstones marked [TIER: Most Sellers (Standard / Popular)].
+     - If no exact tier matches, recommend the closest matching catalog gemstone so options are never empty.
      If only 1 or 2 matching stones exist in the catalog for the requested color/budget (e.g. for blue color, only Blue Sapphire and London Blue Topaz exist), suggest ONLY those available! NEVER fabricate an unlisted stone (like Blue Spinel)!
      Use the exact gemstone name from the catalog: "[Exact Gemstone Name] Solid 925 Silver Ring / Pendant" (e.g. "1️⃣ Blue Sapphire Solid 925 Silver Ring", "2️⃣ Aquamarine Solid 925 Silver Pendant").
      👉 Quote price clearly separating Gemstone & Silver Setting:
