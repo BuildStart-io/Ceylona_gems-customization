@@ -527,7 +527,7 @@ export async function handleQualificationFlow(
   // General greetings only reset to START if lead is NOT already qualified or in an active flow
   const isGreeting = /^(hi|hello|hey|hlw|hlo|halo|ආයුබෝවන්|සාදරයෙන්|வணக்கம்|ஹலோ)$/i.test(lower);
 
-  if (isExplicitReset || (isGreeting && !isAlreadyQualified && state.current_step === "START")) {
+  if (isExplicitReset || (isGreeting && !isAlreadyQualified && (state.current_step === "START" || state.current_step === "CATEGORY_SELECT"))) {
     state = { current_step: "START" };
   }
 
@@ -639,23 +639,25 @@ export async function handleQualificationFlow(
   // --------------------------------------------------------------------------
   // If the user taps a Category poll option or requests a Category at ANY time,
   // immediately transition cleanly to that Category flow, wiping any stale cross-category fields.
+  const currentCategoryPollOptions = getCategoryPollOptions(flowConfig);
+
   const isGiftingGemstonesVote =
     lower.includes("gifting gemstone") ||
     lower === "💎 gifting gemstones" ||
-    (state.current_step === "CATEGORY_SELECT" && (lower.includes("gemstone") || lower.includes("මැණික්") || lower === "1"));
+    (state.current_step === "CATEGORY_SELECT" && (lower.includes("gemstone") || lower.includes("මැණික්") || (currentCategoryPollOptions[0] && lower === "1" && currentCategoryPollOptions[0].toLowerCase().includes("gemstone"))));
 
   const isSilverJewelryVote =
     lower.includes("silver jewelry") ||
     lower.includes("rings & pendants") ||
     lower === "💍 silver jewelry (rings & pendants)" ||
     (state.category === "Gifting Gemstone" && (lower.includes("silver") || lower.includes("ring") || lower.includes("pendant") || lower.includes("රිදී"))) ||
-    (state.current_step === "CATEGORY_SELECT" && (lower.includes("jewelry") || lower.includes("silver") || lower.includes("රිදී") || lower.includes("ring") || lower.includes("pendant") || lower === "2"));
+    (state.current_step === "CATEGORY_SELECT" && (lower.includes("jewelry") || lower.includes("silver") || lower.includes("රිදී") || lower.includes("ring") || lower.includes("pendant") || (currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) !== -1 && lower === String(currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) + 1))));
 
   const isGiftPackagingVote =
     lower.includes("gift packaging") ||
     lower.includes("packaging & cards") ||
     lower === "🎁 gift packaging & cards" ||
-    (state.current_step === "CATEGORY_SELECT" && (lower.includes("packaging") || lower.includes("box") || lower.includes("card") || lower === "3"));
+    (state.current_step === "CATEGORY_SELECT" && (lower.includes("packaging") || lower.includes("box") || lower.includes("card") || (currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("packaging")) !== -1 && lower === String(currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("packaging")) + 1))));
 
   if (isGiftingGemstonesVote && flowConfig.categories?.gemstones?.enabled !== false) {
     state = {
@@ -814,16 +816,13 @@ export async function handleQualificationFlow(
   // STEP 1: CATEGORY SELECTION (Fallback for unrecognized input)
   // --------------------------------------------------------------------------
   if (state.current_step === "CATEGORY_SELECT") {
+    const greetingMsg = getStepMessage(flowConfig, "greeting");
     return {
       handled: true,
-      replyText: "ඔයාට gift එකක් විදිහට තෝරාගන්න කැමති category එක පහළින් තෝරන්නකෝ 👇",
+      replyText: greetingMsg || "ඔයාට gift එකක් විදිහට තෝරාගන්න කැමති category එක පහළින් තෝරන්නකෝ 👇",
       poll: {
         name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
-        options: [
-          "💎 Gifting Gemstones",
-          "💍 Silver Jewelry (Rings & Pendants)",
-          "🎁 Gift Packaging & Cards",
-        ],
+        options: getCategoryPollOptions(flowConfig),
         multipleAnswers: false,
       },
     };
