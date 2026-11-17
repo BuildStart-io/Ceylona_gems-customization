@@ -939,8 +939,27 @@ async function handleTakenOverChatInbound(
 
     console.log(`[${corrId}] Taken-over chat ${phoneNumber} has ${consecutiveInbound} consecutive unanswered inbound message(s)`);
 
-    // 2. Alert threshold: 2 or more unanswered messages
-    if (consecutiveInbound >= 2) {
+    // 2. Load notification settings (recipients, waiting alert enabled, threshold, cooldown)
+    const { data: notifSettings } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "order_notifications")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const notifVal = notifSettings?.value || {};
+    const isAlertEnabled = notifVal.waiting_alert_enabled !== false; // defaults to true
+    if (!isAlertEnabled) {
+      console.log(`[${corrId}] Customer waiting alert is disabled in settings for ${phoneNumber}`);
+      return;
+    }
+
+    const threshold = Number(notifVal.waiting_alert_threshold) || 2;
+    const cooldownMins = Number(notifVal.waiting_alert_cooldown_mins) || 20;
+    const cooldownMs = cooldownMins * 60 * 1000;
+
+    // Check consecutive unanswered inbound messages against dynamic threshold
+    if (consecutiveInbound >= threshold) {
       const { data: leadRow } = await supabase
         .from("leads")
         .select("custom_fields, customer_name")
@@ -950,7 +969,6 @@ async function handleTakenOverChatInbound(
 
       const lastAlertAt = leadRow?.custom_fields?.last_unanswered_alert_at;
       const now = Date.now();
-      const cooldownMs = 20 * 60 * 1000; // 20 minutes cooldown between alerts
 
       // Check if human agent has replied since the last alert was sent
       const lastOutboundMsg = recentMsgs?.find((m: any) => m.direction === "outbound");
@@ -959,15 +977,7 @@ async function handleTakenOverChatInbound(
       const isWithinCooldown = lastAlertAt && (now - new Date(lastAlertAt).getTime()) < cooldownMs && !agentRepliedSinceAlert;
 
       if (!isWithinCooldown) {
-        console.log(`[${corrId}] Triggering unanswered customer alert to owner for ${phoneNumber} (${consecutiveInbound} messages waiting)`);
-
-        // Load notification recipients from settings (phone, phone_2, phone_3, etc.)
-        const { data: notifSettings } = await supabase
-          .from("settings")
-          .select("value")
-          .eq("key", "order_notifications")
-          .eq("user_id", userId)
-          .maybeSingle();
+        console.log(`[${corrId}] Triggering unanswered customer alert to owner for ${phoneNumber} (${consecutiveInbound}/${threshold} messages waiting)`);
 
         const recipients = getNotificationRecipients(notifSettings);
         if (recipients.length > 0) {

@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, MessageSquare, CreditCard, Copy, Check, Smartphone, RefreshCw, Wifi, WifiOff, Plus, Trash2, ArrowUp, ArrowDown, GripVertical, Clock, Lock, Sliders } from "lucide-react";
+import { Loader2, Save, MessageSquare, CreditCard, Copy, Check, Smartphone, RefreshCw, Wifi, WifiOff, Plus, Trash2, ArrowUp, ArrowDown, GripVertical, Clock, Lock, Sliders, AlertCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import WelcomeMediaUpload from "@/components/settings/WelcomeMediaUpload";
 import StaffManager from "@/components/settings/StaffManager";
 import ChatFlowSettings from "@/components/settings/ChatFlowSettings";
@@ -94,6 +95,9 @@ export default function Settings() {
   const [notificationPhone, setNotificationPhone] = useState("");
   const [notificationPhone2, setNotificationPhone2] = useState("");
   const [notificationPhone3, setNotificationPhone3] = useState("");
+  const [waitingAlertEnabled, setWaitingAlertEnabled] = useState(true);
+  const [waitingAlertThreshold, setWaitingAlertThreshold] = useState<number>(2);
+  const [waitingAlertCooldownMins, setWaitingAlertCooldownMins] = useState<number>(20);
 
   // Order Follow-up Message
   const [orderFollowupMessage, setOrderFollowupMessage] = useState("");
@@ -187,6 +191,9 @@ export default function Settings() {
             setNotificationPhone(notifVal?.phone || "");
             setNotificationPhone2(notifVal?.phone_2 || notifVal?.additional_phones?.[0] || "");
             setNotificationPhone3(notifVal?.phone_3 || notifVal?.additional_phones?.[1] || "");
+            setWaitingAlertEnabled(notifVal?.waiting_alert_enabled ?? true);
+            setWaitingAlertThreshold(Number(notifVal?.waiting_alert_threshold) || 2);
+            setWaitingAlertCooldownMins(Number(notifVal?.waiting_alert_cooldown_mins) || 20);
             break;
           }
           case "delivery_settings":
@@ -575,6 +582,9 @@ export default function Settings() {
       phone_2: notificationPhone2.trim(),
       phone_3: notificationPhone3.trim(),
       additional_phones: [notificationPhone2.trim(), notificationPhone3.trim()].filter(Boolean),
+      waiting_alert_enabled: waitingAlertEnabled,
+      waiting_alert_threshold: waitingAlertThreshold,
+      waiting_alert_cooldown_mins: waitingAlertCooldownMins,
     });
   };
 
@@ -1206,6 +1216,72 @@ export default function Settings() {
                       Manager or backup notification number
                     </p>
                   </div>
+                </div>
+
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                        Customer Waiting Alert (Manual Agent Mode)
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Send WhatsApp alert to owner and staff when a customer is waiting for a reply in a taken-over chat.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={waitingAlertEnabled}
+                      onCheckedChange={setWaitingAlertEnabled}
+                    />
+                  </div>
+
+                  {waitingAlertEnabled && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/40 p-4 rounded-lg border">
+                      <div className="space-y-2">
+                        <Label htmlFor="waiting-alert-threshold">Unanswered Message Threshold</Label>
+                        <Select
+                          value={String(waitingAlertThreshold)}
+                          onValueChange={(val) => setWaitingAlertThreshold(Number(val) || 2)}
+                        >
+                          <SelectTrigger id="waiting-alert-threshold">
+                            <SelectValue placeholder="Select threshold" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 Message waiting</SelectItem>
+                            <SelectItem value="2">2 Messages waiting (Recommended)</SelectItem>
+                            <SelectItem value="3">3 Messages waiting</SelectItem>
+                            <SelectItem value="4">4 Messages waiting</SelectItem>
+                            <SelectItem value="5">5 Messages waiting</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Alert triggers when customer sends this many messages without an agent response.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="waiting-alert-cooldown">Repeat Alert Gap</Label>
+                        <Select
+                          value={String(waitingAlertCooldownMins)}
+                          onValueChange={(val) => setWaitingAlertCooldownMins(Number(val) || 20)}
+                        >
+                          <SelectTrigger id="waiting-alert-cooldown">
+                            <SelectValue placeholder="Select cooldown" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10">10 Minutes</SelectItem>
+                            <SelectItem value="15">15 Minutes</SelectItem>
+                            <SelectItem value="20">20 Minutes (Default)</SelectItem>
+                            <SelectItem value="30">30 Minutes</SelectItem>
+                            <SelectItem value="60">1 Hour</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Minimum wait time before repeating the alert if still unanswered.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button onClick={handleSaveNotifications} disabled={saving}>
