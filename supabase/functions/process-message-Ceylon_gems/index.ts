@@ -269,7 +269,8 @@ async function processMessage(
       .eq("phone_number", phoneNumber)
       .maybeSingle();
 
-    if (leadCheck?.status === "qualified" || leadCheck?.custom_fields?.is_qualified === true) {
+    const isManuallyReleased = leadCheck?.custom_fields?.manual_takeover_released === true;
+    if (!isManuallyReleased && (leadCheck?.status === "qualified" || leadCheck?.custom_fields?.is_qualified === true)) {
       isChatTakenOver = true;
       // Auto-sync into chat_takeovers table so UI and future queries see it as taken over
       await supabase.from("chat_takeovers").upsert({

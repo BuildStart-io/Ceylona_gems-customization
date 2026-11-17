@@ -175,11 +175,41 @@ export default function Conversations() {
     setTogglingTakeover(true);
     try {
       const isTakenOver = takenOverChats.has(phoneNumber);
+      const targetUserId = effectiveUserId || user.id;
+
       if (isTakenOver) {
         await (supabase.from("chat_takeovers" as any) as any)
           .delete()
-          .eq("user_id", effectiveUserId || user.id)
+          .eq("user_id", targetUserId)
           .eq("phone_number", phoneNumber);
+
+        // Also release manual takeover in leads table so bot stays re-enabled
+        const { data: leadRow } = await supabase
+          .from("leads")
+          .select("custom_fields")
+          .eq("user_id", targetUserId)
+          .eq("phone_number", phoneNumber)
+          .maybeSingle();
+
+        if (leadRow) {
+          const currentCf = (leadRow as any).custom_fields || {};
+          await (supabase.from("leads") as any)
+            .update({
+              custom_fields: {
+                ...currentCf,
+                manual_takeover_released: true,
+                bot_resumed_at: new Date().toISOString(),
+                unanswered_count: 0,
+                flow_state: {
+                  ...((currentCf.flow_state as any) || {}),
+                  current_step: "START",
+                },
+              },
+            })
+            .eq("user_id", targetUserId)
+            .eq("phone_number", phoneNumber);
+        }
+
         setTakenOverChats(prev => {
           const next = new Set(prev);
           next.delete(phoneNumber);
@@ -189,10 +219,31 @@ export default function Conversations() {
       } else {
         await (supabase.from("chat_takeovers" as any) as any)
           .upsert({
-            user_id: effectiveUserId || user.id,
+            user_id: targetUserId,
             phone_number: phoneNumber,
             is_taken_over: true,
           }, { onConflict: "user_id,phone_number" });
+
+        const { data: leadRow } = await supabase
+          .from("leads")
+          .select("custom_fields")
+          .eq("user_id", targetUserId)
+          .eq("phone_number", phoneNumber)
+          .maybeSingle();
+
+        if (leadRow) {
+          const currentCf = (leadRow as any).custom_fields || {};
+          await (supabase.from("leads") as any)
+            .update({
+              custom_fields: {
+                ...currentCf,
+                manual_takeover_released: false,
+              },
+            })
+            .eq("user_id", targetUserId)
+            .eq("phone_number", phoneNumber);
+        }
+
         setTakenOverChats(prev => new Set(prev).add(phoneNumber));
         toast({ title: "Bot paused — you're in control" });
       }

@@ -73,15 +73,9 @@ serve(async (req) => {
     const voteObj = wp?.vote || {};
     const pollObj = wp?.poll || {};
 
-    // For regular messages: check wp.fromMe. For poll votes: check voteObj.fromMe.
-    if (event === "poll.vote") {
-      if (voteObj.fromMe === true) {
-        return new Response(JSON.stringify({ ok: true, skipped: "fromMe_vote" }), { headers: jsonHeaders });
-      }
-    } else {
-      if (wp?.fromMe === true) {
-        return new Response(JSON.stringify({ ok: true, skipped: "fromMe" }), { headers: jsonHeaders });
-      }
+    // For poll votes: ignore outbound
+    if (event === "poll.vote" && voteObj.fromMe === true) {
+      return new Response(JSON.stringify({ ok: true, skipped: "fromMe_vote" }), { headers: jsonHeaders });
     }
 
     const fromJid = String(
@@ -178,6 +172,180 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "No user mapped to this session" }), {
         status: 200, headers: jsonHeaders, // 200 so WAHA doesn't retry forever
       });
+    }
+
+    // Handle outbound messages sent from the bot-connected WhatsApp number (Agent / Owner)
+    if (wp?.fromMe === true) {
+      const cleanCmd = (messageText || "").trim().toLowerCase();
+      const isResumeCmd = /^(#|\/)?(resume|bot resume|start bot|resume bot)$/i.test(cleanCmd);
+      const isPauseCmd = /^(#|\/)?(pause|takeover|bot pause|pause bot)$/i.test(cleanCmd);
+
+      if (isResumeCmd || isPauseCmd) {
+        console.log(`[${correlationId}] Agent command "${cleanCmd}" detected for target phone ${phoneNumber}`);
+
+        if (isResumeCmd) {
+          // 1. Release takeover
+          await supabase
+            .from("chat_takeovers")
+            .delete()
+            .eq("user_id", userId)
+            .eq("phone_number", phoneNumber);
+
+          // 2. Update lead custom_fields: mark manual_takeover_released = true, reset unanswered count
+          const { data: leadRow } = await supabase
+            .from("leads")
+            .select("custom_fields")
+            .eq("user_id", userId)
+            .eq("phone_number", phoneNumber)
+            .maybeSingle();
+
+          const existingCf = leadRow?.custom_fields || {};
+          await supabase
+            .from("leads")
+            .update({
+              custom_fields: {
+                ...existingCf,
+                manual_takeover_released: true,
+                bot_resumed_at: new Date().toISOString(),
+                unanswered_count: 0,
+                flow_state: {
+                  ...((existingCf.flow_state as any) || {}),
+                  current_step: "START",
+                },
+              },
+            })
+            .eq("user_id", userId)
+            .eq("phone_number", phoneNumber);
+
+          // 3. Send friendly bot resumed confirmation
+          const resumeNotice = "🤖 *Bot Re-connected!* I am ready to help you with any questions. ✨\n\n💎 Ceylona Gems & Jewelry සහායක සක්‍රියයි.";
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${supabaseServiceKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                to: phoneNumber,
+                message: resumeNotice,
+                sessionApiKey: sessionName,
+              }),
+            });
+
+            await supabase.from("conversations").insert({
+              phone_number: phoneNumber,
+              message: resumeNotice,
+              direction: "outbound",
+              message_type: "text",
+              metadata: { is_bot_resumed_notice: true },
+              user_id: userId,
+            });
+          } catch (err) {
+            console.warn(`[${correlationId}] Failed sending resume notice:`, err);
+          }
+
+          return new Response(JSON.stringify({ ok: true, action: "bot_resumed", phoneNumber }), { headers: jsonHeaders });
+        } else if (isPauseCmd) {
+          // 1. Set takeover
+          await supabase
+            .from("chat_takeovers")
+            .upsert({
+              user_id: userId,
+              phone_number: phoneNumber,
+              is_taken_over: true,
+            }, { onConflict: "user_id,phone_number" });
+
+          // 2. Mark manual_takeover_released = false
+          const { data: leadRow } = await supabase
+            .from("leads")
+            .select("custom_fields")
+            .eq("user_id", userId)
+            .eq("phone_number", phoneNumber)
+            .maybeSingle();
+
+          const existingCf = leadRow?.custom_fields || {};
+          await supabase
+            .from("leads")
+            .update({
+              custom_fields: {
+                ...existingCf,
+                manual_takeover_released: false,
+              },
+            })
+            .eq("user_id", userId)
+            .eq("phone_number", phoneNumber);
+
+          const pauseNotice = "⏸️ *Bot Paused.* Our sales specialist is now assisting you directly. ✨";
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${supabaseServiceKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                to: phoneNumber,
+                message: pauseNotice,
+                sessionApiKey: sessionName,
+              }),
+            });
+
+            await supabase.from("conversations").insert({
+              phone_number: phoneNumber,
+              message: pauseNotice,
+              direction: "outbound",
+              message_type: "text",
+              metadata: { is_bot_paused_notice: true },
+              user_id: userId,
+            });
+          } catch (err) {
+            console.warn(`[${correlationId}] Failed sending pause notice:`, err);
+          }
+
+          return new Response(JSON.stringify({ ok: true, action: "bot_paused", phoneNumber }), { headers: jsonHeaders });
+        }
+      }
+
+      // Normal fromMe message (agent conversing directly with customer via WhatsApp):
+      // Store in conversations & reset unanswered_count so waiting alert doesn't fire while agent is talking
+      if (messageText) {
+        try {
+          await supabase.from("conversations").insert({
+            phone_number: phoneNumber,
+            message: messageText,
+            direction: "outbound",
+            message_type: "text",
+            metadata: { source: "agent_direct_whatsapp", wahaMessageId },
+            user_id: userId,
+          });
+
+          const { data: leadRow } = await supabase
+            .from("leads")
+            .select("custom_fields")
+            .eq("user_id", userId)
+            .eq("phone_number", phoneNumber)
+            .maybeSingle();
+
+          if (leadRow) {
+            await supabase
+              .from("leads")
+              .update({
+                custom_fields: {
+                  ...(leadRow.custom_fields || {}),
+                  unanswered_count: 0,
+                  last_agent_reply_at: new Date().toISOString(),
+                },
+              })
+              .eq("user_id", userId)
+              .eq("phone_number", phoneNumber);
+          }
+        } catch (convErr) {
+          console.warn(`[${correlationId}] Failed storing outbound agent message:`, convErr);
+        }
+      }
+
+      return new Response(JSON.stringify({ ok: true, skipped: "fromMe" }), { headers: jsonHeaders });
     }
 
     console.log(`[${correlationId}] Enqueue msg ${wahaMessageId} from ${phoneNumber} (${senderName}) → user ${userId}: ${messageText.substring(0, 80)}`);

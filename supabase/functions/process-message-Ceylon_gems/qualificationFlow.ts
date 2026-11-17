@@ -516,13 +516,14 @@ export async function handleQualificationFlow(
     .maybeSingle();
 
   const isAlreadyQualified = leadRow?.status === "qualified" || leadRow?.custom_fields?.is_qualified === true;
+  const isManuallyReleased = leadRow?.custom_fields?.manual_takeover_released === true;
 
   let state: LeadFlowState = (leadRow?.custom_fields?.flow_state as LeadFlowState) || {
-    current_step: isAlreadyQualified ? "HANDED_OFF" : "START",
+    current_step: (isAlreadyQualified && !isManuallyReleased) ? "HANDED_OFF" : "START",
   };
 
-  // If customer is already qualified, keep them in HANDED_OFF unless they explicitly ask to reset
-  if (isAlreadyQualified && (!state.current_step || state.current_step === "START")) {
+  // If customer is already qualified, keep them in HANDED_OFF unless manual takeover was released or explicitly reset
+  if (isAlreadyQualified && !isManuallyReleased && (!state.current_step || state.current_step === "START")) {
     state.current_step = "HANDED_OFF";
   }
 
@@ -530,10 +531,10 @@ export async function handleQualificationFlow(
 
   // Check if explicit reset/restart is requested (e.g. "start", "reset", "begin", "menu", "මුල සිට")
   const isExplicitReset = /^(start|begin|restart|reset|menu|main menu|home|options|මුල සිට|අලුත්|ආපසු|new order|new gift|මෙනු|மீண்டும்|ஆரம்பம்)$/i.test(lower);
-  // General greetings reset to START if lead is NOT already qualified
+  // General greetings reset to START if lead is NOT already qualified or if manual takeover was released
   const isGreeting = /^(hi|hello|hey|hlw|hlo|halo|gm|gn|good morning|good evening|ආයුබෝවන්|සාදරයෙන්|வணக்கம்|ஹலோ)$/i.test(lower);
 
-  if (isExplicitReset || (isGreeting && !isAlreadyQualified)) {
+  if (isExplicitReset || (isGreeting && (!isAlreadyQualified || isManuallyReleased))) {
     state = { current_step: "START" };
   }
 
@@ -1625,17 +1626,29 @@ async function saveFlowState(
       flowState.current_step === "HANDED_OFF" ||
       flowState.current_step === "QUALIFIED_COMPLETE";
 
+    const { data: existingLead } = await supabase
+      .from("leads")
+      .select("custom_fields, status")
+      .eq("user_id", userId)
+      .eq("phone_number", phoneNumber)
+      .maybeSingle();
+
+    const existingCf = existingLead?.custom_fields || {};
+    const updatedCf = {
+      ...existingCf,
+      flow_state: flowState,
+      is_qualified: isQualified,
+      ...(isQualified ? { manual_takeover_released: false } : {}),
+      ...(flowState.handed_off_at ? { handed_off_at: flowState.handed_off_at } : {}),
+    };
+
     await supabase.from("leads").upsert(
       {
         user_id: userId,
         phone_number: phoneNumber,
         customer_name: customerName || "Customer",
-        status: isQualified ? "qualified" : "in_progress",
-        custom_fields: {
-          flow_state: flowState,
-          is_qualified: isQualified,
-          ...(flowState.handed_off_at ? { handed_off_at: flowState.handed_off_at } : {}),
-        },
+        status: isQualified ? "qualified" : (existingLead?.status || "in_progress"),
+        custom_fields: updatedCf,
       },
       { onConflict: "user_id,phone_number" }
     );
