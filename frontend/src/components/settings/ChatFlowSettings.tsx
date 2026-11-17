@@ -348,10 +348,27 @@ export default function ChatFlowSettings() {
 
   const updateTier = (category: "gemstones" | "jewelry", index: number, field: "label" | "min" | "max", value: any) => {
     const tiers = [...config.categories[category].budget_tiers];
+    const currentTier = tiers[index];
+
+    let newLabel = field === "label" ? value : currentTier.label;
+    const newMin = field === "min" ? (Number(value) || 0) : currentTier.min;
+    const newMax = field === "max" ? (Number(value) || 0) : currentTier.max;
+
+    // Automatically generate clean WhatsApp Poll label when Min or Max is edited
+    if (field === "min" || field === "max") {
+      if (newMax >= 99999 || newMax >= 999999) {
+        newLabel = `🔹 Above LKR ${newMin.toLocaleString()}`;
+      } else {
+        newLabel = `🔹 LKR ${newMin.toLocaleString()} – ${newMax.toLocaleString()}`;
+      }
+    }
+
     tiers[index] = {
-      ...tiers[index],
+      ...currentTier,
       [field]: field === "label" ? value : Number(value) || 0,
+      label: newLabel,
     };
+
     setConfig({
       ...config,
       categories: {

@@ -48,24 +48,40 @@ const FAQ_KNOWLEDGE: { keywords: string[]; answer: string }[] = [
     answer: "ඔව්, අපි ළඟ තියෙන හැම gemstone එකකටම Government-Registered Gem Lab Certificate එකක් ඇතුළත් කරලා තමයි ලබා දෙන්නේ (worth LKR 1,500 included in the price). 📜💎",
   },
   {
-    keywords: ["delivery thiyanawada", "delivery thiyenawada", "delivery thiyeda", "islandwide delivery", "deliver karanawada", "deliver puluwanda", "delivery puluwanda", "delivery puluwan"],
-    answer: "ඔව්, අපි Islandwide delivery (දිවයින පුරා බෙදාහැරීම) සිදු කරනවා. 🚚 Islandwide delivery fee එක Rs. 350ක් වෙනවා. දින 3–5ක් ඇතුළත safe courier මගින් delivery කරනු ලැබේ. ✨",
+    keywords: [
+      "delivery thiyanawada", "delivery thiyenawada", "islandwide delivery", "deliver karanawada",
+      "delivery puluwanda", "delivery irukka", "delivery seivangala", "delivery tharuvangala", "delivery facility"
+    ],
+    answer: "ඔව්, අපි Islandwide delivery (දිවයින පුරා බෙදාහැරීම) සිදු කරනවා. 🚚 Islandwide delivery fee එක Rs. 350ක් වෙනවා. දින 3–5ක් ඇතුළත safe courier මගින් delivery කරනු ලැබේ. ✨\n(ஆம், நாம் நாடளாவிய ரீதியில் Islandwide delivery வழங்குகிறோம். 3–5 நாட்களில் courier மூலம் கிடைக்கும்).",
   },
   {
-    keywords: ["cod", "cash on delivery", "delivery ekedi gewanna"],
-    answer: "මේ වෙලාවේ COD temporarily pause කරලා තියෙන්නේ safe delivery quality එක ආරක්ෂා කරගන්න. 100% Bank Transfer මගින් payment කරන්න පුළුවන්. Delivery fee එක islandwide Rs. 350ක් වෙනවා. 🚚",
+    keywords: [
+      "cod", "cash on delivery", "delivery ekedi gewanna", "kaiyila kaasu", "cod irukka", "cod tharalama", "cash on delivery thiyenawada"
+    ],
+    answer: "මේ වෙලාවේ COD temporarily pause කරලා තියෙන්නේ safe delivery quality එක ආරක්ෂා කරගන්න. 100% Bank Transfer මගින් payment කරන්න පුළුවන්. Delivery fee එක islandwide Rs. 350ක් වෙනවා. 🚚\n(தற்போது COD தற்காலிகமாக நிறுத்தப்பட்டுள்ளது. 100% Bank Transfer மூலம் பாதுகாப்பாக பணம் செலுத்தலாம்).",
   },
   {
-    keywords: ["location", "shop", "place", "where", "koheda", "store", "enna puluwanda", "visit"],
-    answer: "අපි Wellampitiya වල based වෙලා ඉන්නේ online boutique එකක් විදිහට. දැනට direct safe courier delivery මගින් parcel එක ගෙදරටම ලබා දෙනවා. 📍✨",
+    keywords: [
+      "location", "shop", "place", "where", "koheda", "store", "enna puluwanda", "visit",
+      "kadai enga", "shop enga", "place enga", "enga irukku", "location enga"
+    ],
+    answer: "අපි Wellampitiya වල based වෙලා ඉන්නේ online boutique එකක් විදිහට. දැනට direct safe courier delivery මගින් parcel එක ගෙදරටම ලබා දෙනවා. 📍✨\n(நாம் Wellampitiya-வில் இயங்கும் online boutique. பாதுகாப்பான courier delivery மூலம் உங்கள் வீட்டுக்கே அனுப்பி வைக்கிறோம்).",
   },
   {
-    keywords: ["genuine", "real", "natural", "aththatama", "boruda", "original"],
-    answer: "ඔව්, 100% genuine natural Sri Lankan gemstones පමණයි අපි ලබා දෙන්නේ. ඒ වගේම රජයේ ලියාපදිංචි gem lab certificate එකකුත් gemstone එකත් එක්කම ලැබෙනවා. 💎",
+    keywords: [
+      "genuine", "real", "natural", "aththatama", "boruda", "original", "natural gemstone",
+      "unmai thaana", "original thaana", "certificate irukka", "certificate tharuvangala"
+    ],
+    answer: "ඔව්, 100% genuine natural Sri Lankan gemstones පමණයි අපි ලබා දෙන්නේ. ඒ වගේම හැම gemstone එකකටම රජයේ ලියාපදිංචි gem lab certificate එකක් මිලටම ඇතුළත්ව ලැබෙනවා. 📜💎\n(ஆம், 100% உண்மையான இயற்கை நவரத்தினங்கள் மட்டுமே. அரசாங்கப் பதிவுபெற்ற gem lab certificate இலவசமாக வழங்கப்படும்).",
   },
   {
-    keywords: ["delivery", "days", "kal", "dawas", "time", "reach", "kawadada labenne"],
-    answer: "සාමාන්‍යයෙන් order එකක් prepare කරලා courier මගින් delivery වෙන්න දින 3–5ක් පමණ ගත වෙනවා. ඉක්මනින් අවශ්‍ය නම් අපේ sales agent කෙනෙක් assist කරයි. ⏳",
+    keywords: [
+      "delivery", "days", "kal", "dawas", "time", "reach", "kawadada labenne",
+      "ethana nal", "ethana naal", "ethana nalayula", "nalayula", "evvalavu naal",
+      "evvalavu neram", "eppadi deliver", "delivery eppo", "delivery time", "delivery days", "delivery ethana",
+      "delivery fee", "delivery charge"
+    ],
+    answer: "සාමාන්‍යයෙන් order එකක් prepare කරලා courier මගින් delivery වෙන්න දින 3–5ක් පමණ ගත වෙනවා (Islandwide delivery fee Rs. 350). ඉක්මනින් අවශ්‍ය නම් අපේ sales agent කෙනෙක් assist කරයි. 🚚⏳\n(பொதுவாக 3 முதல் 5 நாட்களுக்குள் பாதுகாப்பான courier மூலம் டெலிவரி செய்யப்படும். அவசரம் எனின் sales agent உதவுவார்).",
   },
 ];
 
@@ -142,6 +158,107 @@ async function findFaqInDb(supabase: SupabaseClient, userId: string, text: strin
   } catch (err) {
     console.warn("[FlowController] FAQ DB lookup error:", err);
     return null;
+  }
+}
+
+async function analyzeMessageWithAi(
+  supabase: SupabaseClient,
+  userId: string,
+  currentStep: string,
+  customerMessage: string
+): Promise<{
+  isQuestion: boolean;
+  faqAnswer?: string;
+  extractedDate?: string;
+  extractedRecipient?: string;
+  extractedRingSize?: string;
+}> {
+  try {
+    const aiGenerateUrl = Deno.env.get("AI_GENERATE_URL");
+    const botApiKey = Deno.env.get("BOT_API_KEY");
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+
+    if (!aiGenerateUrl && !lovableApiKey) {
+      return { isQuestion: false };
+    }
+
+    const { data: faqs } = await supabase
+      .from("faqs")
+      .select("question, answer")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .limit(15);
+
+    const faqContext = (faqs || [])
+      .map((f: any) => `Q: ${f.question}\nA: ${f.answer}`)
+      .join("\n\n");
+
+    const systemPrompt = `You are the intent analyzer for Ceylona Gems & Jewelry WhatsApp Assistant.
+The customer is in a shopping qualification flow at step: "${currentStep}".
+Customer's message: "${customerMessage}".
+
+Business FAQs & Information:
+${faqContext}
+General business facts:
+- Standard order delivery takes 3 to 5 business days islandwide (Rs. 350 courier fee).
+- COD is temporarily paused, 100% bank transfer accepted.
+- Located in Wellampitiya as an online boutique with safe islandwide delivery.
+- 100% genuine natural gemstones with registered gem lab certificate included.
+
+Your task:
+1. Determine if this customer message is an inquiry/question (e.g. asking how many days delivery takes, COD, store location, genuine certificates, prices, discounts, custom orders) OR an out-of-flow tangent.
+   - If it is a question: set "isQuestion": true. Write a polite, natural, short answer in "faqAnswer" matching the customer's language (Tamil, Sinhala, or English).
+2. If it is NOT a question, but rather answering the step (e.g. a date, recipient, ring size, gemstone preference):
+   - Set "isQuestion": false. Extract the clean value into "extractedDate", "extractedRecipient", or "extractedRingSize".
+
+Respond ONLY with valid JSON in this exact structure:
+{"isQuestion": boolean, "faqAnswer": string | null, "extractedDate": string | null, "extractedRecipient": string | null, "extractedRingSize": string | null}`;
+
+    const MODEL = "google/gemini-2.5-flash";
+    let aiRes: Response;
+
+    if (aiGenerateUrl && botApiKey) {
+      aiRes = await fetch(aiGenerateUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-bot-key": botApiKey },
+        body: JSON.stringify({
+          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: customerMessage }],
+          model: MODEL,
+          maxTokens: 300,
+        }),
+      });
+    } else {
+      aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: customerMessage }],
+          max_tokens: 300,
+        }),
+      });
+    }
+
+    if (!aiRes.ok) return { isQuestion: false };
+
+    const aiData = await aiRes.json();
+    const content = aiData?.choices?.[0]?.message?.content || aiData?.response || "";
+    const cleanJson = content.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleanJson);
+
+    return {
+      isQuestion: Boolean(parsed.isQuestion),
+      faqAnswer: parsed.faqAnswer || undefined,
+      extractedDate: parsed.extractedDate || undefined,
+      extractedRecipient: parsed.extractedRecipient || undefined,
+      extractedRingSize: parsed.extractedRingSize || undefined,
+    };
+  } catch (err) {
+    console.warn("[FlowController] AI intent analysis error:", err);
+    return { isQuestion: false };
   }
 }
 
@@ -379,8 +496,23 @@ export function getStepMessage(
       text = text.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
     }
   }
-  const top = stepCfg?.top_message;
-  const bottom = stepCfg?.bottom_message;
+  let top = stepCfg?.top_message;
+  let bottom = stepCfg?.bottom_message;
+
+  // Smart Fallback across counterpart steps (e.g. gem_recipient_date <-> jewelry_recipient_date)
+  if ((!top || !top.trim()) && stepKey === "jewelry_recipient_date") {
+    top = flowConfig?.steps?.gem_recipient_date?.top_message;
+  }
+  if ((!bottom || !bottom.trim()) && stepKey === "jewelry_recipient_date") {
+    bottom = flowConfig?.steps?.gem_recipient_date?.bottom_message;
+  }
+  if ((!top || !top.trim()) && stepKey === "gem_recipient_date") {
+    top = flowConfig?.steps?.jewelry_recipient_date?.top_message;
+  }
+  if ((!bottom || !bottom.trim()) && stepKey === "gem_recipient_date") {
+    bottom = flowConfig?.steps?.jewelry_recipient_date?.bottom_message;
+  }
+
   return withTopBottom(text, top, bottom);
 }
 
@@ -763,7 +895,7 @@ export async function handleQualificationFlow(
 
     return {
       handled: true,
-      replyText: "Solid 925 Silver Rings! 💍 ඔයාගෙ Ring Size එක දන්නවද? (උදා: US 5, 6, 7, 8, 9, 10, 11 හෝ දන්නේ නැත්නම් 'දන්නේ නෑ' කියලා කියන්න පුළුවන්) ✨",
+      replyText: getStepMessage(flowConfig, "ring_size"),
     };
   }
 
@@ -774,16 +906,16 @@ export async function handleQualificationFlow(
     state.current_step = "JEWELRY_BUDGET_SELECT";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
+    const jewelryTiers = (flowConfig.categories?.jewelry?.budget_tiers && flowConfig.categories.jewelry.budget_tiers.length > 0)
+      ? flowConfig.categories.jewelry.budget_tiers
+      : DEFAULT_FLOW_CONFIG.categories!.jewelry!.budget_tiers!;
+
     return {
       handled: true,
-      replyText: "Solid 925 Silver Pendants! ✨ Silver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+      replyText: getStepMessage(flowConfig, "jewelry_budget"),
       poll: {
         name: "💰 Silver Jewelry Budget Range:",
-        options: [
-          "🔹 LKR 10,000 – 20,000",
-          "🔹 LKR 20,000 – 35,000",
-          "🔹 Above LKR 35,000",
-        ],
+        options: jewelryTiers.map((t) => t.label),
         multipleAnswers: false,
       },
     };
@@ -797,7 +929,7 @@ export async function handleQualificationFlow(
 
     return {
       handled: true,
-      replyText: "Custom Goldsmithing & Bespoke Design! 💎 අපේ master jeweler කෙනෙක් ඔයාගෙ design එක සහ gemstone mounting ගැන කතා කරන්න සූදානම්. ඔයා බලාපොරොත්තු වෙන design එක සහ budget එක කෙටියෙන් සඳහන් කරන්නකෝ. ✨",
+      replyText: getStepMessage(flowConfig, "custom_design"),
     };
   }
 
@@ -807,7 +939,20 @@ export async function handleQualificationFlow(
   // If the user's message is clearly a question (e.g., COD, Location, Price general, Certificate)
   // and doesn't match the current step's expected action, we answer and immediately resume the step!
   const isDirectStepChoice = isStepMatchingInput(state.current_step, cleanText);
-  const faqAnswer = !isDirectStepChoice ? (matchFaqQuestion(cleanText) || await findFaqInDb(supabase, userId, cleanText)) : null;
+  let faqAnswer = !isDirectStepChoice ? (matchFaqQuestion(cleanText) || await findFaqInDb(supabase, userId, cleanText)) : null;
+
+  // If local match did not find an answer, but the input is not a direct step choice and has substantive text:
+  if (!isDirectStepChoice && !faqAnswer && cleanText.length >= 3) {
+    const aiAnalysis = await analyzeMessageWithAi(supabase, userId, state.current_step, cleanText);
+    if (aiAnalysis.isQuestion && aiAnalysis.faqAnswer) {
+      faqAnswer = aiAnalysis.faqAnswer;
+    } else if (!aiAnalysis.isQuestion) {
+      // AI recognized this was actually an answer to the step!
+      if (aiAnalysis.extractedDate && !state.required_date) state.required_date = aiAnalysis.extractedDate;
+      if (aiAnalysis.extractedRecipient && !state.gift_recipient) state.gift_recipient = aiAnalysis.extractedRecipient;
+      if (aiAnalysis.extractedRingSize && !state.ring_size) state.ring_size = aiAnalysis.extractedRingSize;
+    }
+  }
 
   if (faqAnswer && !isDirectStepChoice) {
     console.log(`[FlowController] Tangent detected at step ${state.current_step}: "${cleanText}"`);
@@ -928,18 +1073,24 @@ export async function handleQualificationFlow(
     // Still missing delivery date? Ask for it specifically!
     if (state.gift_recipient && !state.required_date) {
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+      const text = "ස්තූතියි! 🎁 මේ gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅";
+      const top = flowConfig.steps?.gem_recipient_date?.top_message || flowConfig.steps?.jewelry_recipient_date?.top_message;
+      const bottom = flowConfig.steps?.gem_recipient_date?.bottom_message || flowConfig.steps?.jewelry_recipient_date?.bottom_message;
       return {
         handled: true,
-        replyText: "ස්තූතියි! 🎁 මේ gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅",
+        replyText: withTopBottom(text, top, bottom),
       };
     }
 
     // Still missing recipient? Ask for it specifically!
     if (!state.gift_recipient && state.required_date) {
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+      const text = "ස්තූතියි! 📅 මේ gift එක කාටද දෙන්න හිතන් ඉන්නේ කියලා කියන්න පුළුවන්ද? 🎁";
+      const top = flowConfig.steps?.gem_recipient_date?.top_message || flowConfig.steps?.jewelry_recipient_date?.top_message;
+      const bottom = flowConfig.steps?.gem_recipient_date?.bottom_message || flowConfig.steps?.jewelry_recipient_date?.bottom_message;
       return {
         handled: true,
-        replyText: "ස්තූතියි! 📅 මේ gift එක කාටද දෙන්න හිතන් ඉන්නේ කියලා කියන්න පුළුවන්ද? 🎁",
+        replyText: withTopBottom(text, top, bottom),
       };
     }
 
@@ -947,9 +1098,12 @@ export async function handleQualificationFlow(
     if (!state.gift_recipient && !state.required_date) {
       state.gift_recipient = cleanText;
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+      const text = "ස්තූතියි! 🎁 මේ gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅";
+      const top = flowConfig.steps?.gem_recipient_date?.top_message || flowConfig.steps?.jewelry_recipient_date?.top_message;
+      const bottom = flowConfig.steps?.gem_recipient_date?.bottom_message || flowConfig.steps?.jewelry_recipient_date?.bottom_message;
       return {
         handled: true,
-        replyText: "ස්තූතියි! 🎁 මේ gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅",
+        replyText: withTopBottom(text, top, bottom),
       };
     }
 
@@ -1153,18 +1307,24 @@ export async function handleQualificationFlow(
     // Still missing delivery date? Ask for it specifically!
     if (state.gift_recipient && !state.required_date) {
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+      const text = "ස්තූතියි! 🎁 මේ jewelry gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅";
+      const top = flowConfig.steps?.jewelry_recipient_date?.top_message || flowConfig.steps?.gem_recipient_date?.top_message;
+      const bottom = flowConfig.steps?.jewelry_recipient_date?.bottom_message || flowConfig.steps?.gem_recipient_date?.bottom_message;
       return {
         handled: true,
-        replyText: "ස්තූතියි! 🎁 මේ jewelry gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅",
+        replyText: withTopBottom(text, top, bottom),
       };
     }
 
     // Still missing recipient? Ask for it specifically!
     if (!state.gift_recipient && state.required_date) {
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+      const text = "ස්තූතියි! 📅 මේ jewelry gift එක කාටද දෙන්න හිතන් ඉන්නේ කියලා කියන්න පුළුවන්ද? 🎁";
+      const top = flowConfig.steps?.jewelry_recipient_date?.top_message || flowConfig.steps?.gem_recipient_date?.top_message;
+      const bottom = flowConfig.steps?.jewelry_recipient_date?.bottom_message || flowConfig.steps?.gem_recipient_date?.bottom_message;
       return {
         handled: true,
-        replyText: "ස්තූතියි! 📅 මේ jewelry gift එක කාටද දෙන්න හිතන් ඉන්නේ කියලා කියන්න පුළුවන්ද? 🎁",
+        replyText: withTopBottom(text, top, bottom),
       };
     }
 
@@ -1172,9 +1332,12 @@ export async function handleQualificationFlow(
     if (!state.gift_recipient && !state.required_date) {
       state.gift_recipient = cleanText;
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+      const text = "ස්තූතියි! 🎁 මේ jewelry gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅";
+      const top = flowConfig.steps?.jewelry_recipient_date?.top_message || flowConfig.steps?.gem_recipient_date?.top_message;
+      const bottom = flowConfig.steps?.jewelry_recipient_date?.bottom_message || flowConfig.steps?.gem_recipient_date?.bottom_message;
       return {
         handled: true,
-        replyText: "ස්තූතියි! 🎁 මේ jewelry gift එක කවද්ද delivery කරගන්න ඕනෙ වෙන්නේ කියලා target date එකක් කියන්න පුළුවන්ද? 📅",
+        replyText: withTopBottom(text, top, bottom),
       };
     }
 
@@ -1485,12 +1648,11 @@ function isStepMatchingInput(step: string, text: string): boolean {
     case "JEWELRY_TYPE_SELECT":
       return lower.includes("ring") || lower.includes("pendant") || lower.includes("custom") || lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("solid");
     case "RING_SIZE_SELECT":
-      return !text.includes("?") && !lower.includes("delivery") && !lower.includes("cod") && !lower.includes("location");
+      return /^(us\s*)?\d+(\.5)?$/i.test(lower) || lower.includes("size") || lower.includes("danna") || lower.includes("දන්නේ") || lower.includes("theriyathu") || lower.includes("தெரியாது");
     case "GEM_RECIPIENT_AND_DATE":
     case "JEWELRY_RECIPIENT_AND_DATE":
     case "PACKAGING_RECIPIENT_AND_DATE":
-      if (Boolean(extractDate(text) || extractRecipient(text))) return true;
-      return !text.includes("?") && !lower.includes("delivery fee") && !lower.includes("cod") && !lower.includes("location") && !lower.includes("koheda");
+      return Boolean(extractDate(text) || extractRecipient(text));
     case "PRODUCT_SELECTION":
       return lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("first") || lower.includes("second") || lower.includes("third") || lower.includes("gemstone") || lower.includes("sapphire") || lower.includes("ring") || lower.includes("pendant") || lower.includes("silver") || lower.includes("solid") || lower.includes("ruby") || lower.includes("amethyst") || lower.includes("halo") || lower.includes("solitaire");
     case "CONFIRMATION":

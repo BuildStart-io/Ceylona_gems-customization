@@ -843,8 +843,8 @@ async function maybeNotifyQualifiedLead(
       .eq("user_id", userId)
       .maybeSingle();
 
-    const ownerPhone = notifSettings?.value?.phone;
-    if (!ownerPhone) return;
+    const recipients = getNotificationRecipients(notifSettings);
+    if (recipients.length === 0) return;
 
     const { data: lastMsgs } = await supabase
       .from("conversations")
@@ -876,18 +876,24 @@ async function maybeNotifyQualifiedLead(
       sendApiKey = sessionData?.session_api_key || null;
     }
 
-    const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${supabaseServiceKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ to: ownerPhone, message, sessionApiKey: sendApiKey }),
-    });
-    if (!res.ok) {
-      console.error(`[${corrId}] Lead notification failed:`, (await res.text()).substring(0, 200));
-    } else {
-      console.log(`[${corrId}] Qualified lead notification sent to ${ownerPhone}`);
+    for (const recipientPhone of recipients) {
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${supabaseServiceKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ to: recipientPhone, message, sessionApiKey: sendApiKey }),
+        });
+        if (!res.ok) {
+          console.error(`[${corrId}] Lead notification failed for ${recipientPhone}:`, (await res.text()).substring(0, 200));
+        } else {
+          console.log(`[${corrId}] Qualified lead notification sent to ${recipientPhone}`);
+        }
+      } catch (err) {
+        console.warn(`[${corrId}] Error sending qualified lead notification to ${recipientPhone}:`, err);
+      }
     }
   } catch (e) {
     console.error(`[${corrId}] maybeNotifyQualifiedLead failed:`, (e as Error).message);
