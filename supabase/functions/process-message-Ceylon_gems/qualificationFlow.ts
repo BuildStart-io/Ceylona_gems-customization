@@ -183,6 +183,12 @@ function extractRecipient(text: string): string | null {
   return null;
 }
 
+function isGenericFiller(text: string): boolean {
+  const t = text.toLowerCase().trim();
+  const generic = ["menu", "main menu", "hi", "hello", "hey", "ok", "k", "yes", "no", "thanks", "thank you", "test", "start", "reset", "help"];
+  return generic.includes(t) || t.length < 2;
+}
+
 export interface BudgetTier {
   label: string;
   min: number;
@@ -522,12 +528,12 @@ export async function handleQualificationFlow(
 
   console.log(`[FlowController] Phone: ${phoneNumber} | Step: ${state.current_step} | Input: "${cleanText}" (type: ${messageType})`);
 
-  // Check if explicit reset/restart is requested (e.g. "start", "reset", "begin", "මුල සිට")
-  const isExplicitReset = /^(start|begin|restart|reset|මුල සිට|අලුත්|new order|new gift)$/i.test(lower);
-  // General greetings only reset to START if lead is NOT already qualified or in an active flow
-  const isGreeting = /^(hi|hello|hey|hlw|hlo|halo|ආයුබෝවන්|සාදරයෙන්|வணக்கம்|ஹலோ)$/i.test(lower);
+  // Check if explicit reset/restart is requested (e.g. "start", "reset", "begin", "menu", "මුල සිට")
+  const isExplicitReset = /^(start|begin|restart|reset|menu|main menu|home|options|මුල සිට|අලුත්|ආපසු|new order|new gift|මෙනු|மீண்டும்|ஆரம்பம்)$/i.test(lower);
+  // General greetings reset to START if lead is NOT already qualified
+  const isGreeting = /^(hi|hello|hey|hlw|hlo|halo|gm|gn|good morning|good evening|ආයුබෝවන්|සාදරයෙන්|வணக்கம்|ஹலோ)$/i.test(lower);
 
-  if (isExplicitReset || (isGreeting && !isAlreadyQualified && (state.current_step === "START" || state.current_step === "CATEGORY_SELECT"))) {
+  if (isExplicitReset || (isGreeting && !isAlreadyQualified)) {
     state = { current_step: "START" };
   }
 
@@ -851,8 +857,10 @@ export async function handleQualificationFlow(
   }
 
   if (state.current_step === "GEM_COLOR_SELECT") {
-    state.color = cleanText;
-    state.gemstone_type = cleanText;
+    if (!isGenericFiller(cleanText)) {
+      state.color = cleanText;
+      state.gemstone_type = cleanText;
+    }
     state.current_step = "GEM_SIZE_SELECT";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
@@ -861,7 +869,7 @@ export async function handleQualificationFlow(
     const availableColors = ["blue", "pink", "yellow", "red", "green", "purple", "pushparaga", "ruby", "sapphire", "amethyst", "garnet", "tsavorite", "නිල්", "රතු", "කහ", "රෝස", "දම්", "පච්ච"];
     const isColorAvailable = availableColors.some(c => colorLower.includes(c));
 
-    const colorNote = (!isColorAvailable && colorLower !== "any" && colorLower !== "kisi" && colorLower !== "ona ekak" && colorLower !== "all")
+    const colorNote = (!isColorAvailable && colorLower !== "any" && colorLower !== "kisi" && colorLower !== "ona ekak" && colorLower !== "all" && !isGenericFiller(cleanText))
       ? `(${cleanText} natural gems stock එකේ නැති වුණත්, අපේ popular Royal Blue, Baby Pink, Ruby Red, Golden Yellow sapphire සහ Purple Amethyst වලින් හොඳම gemstone එකක් තෝරගන්න පුළුවන් ✨)\n\n`
       : "";
 
@@ -905,12 +913,14 @@ export async function handleQualificationFlow(
     if (foundDate && !state.required_date) state.required_date = foundDate;
     if (foundRecipient && !state.gift_recipient) state.gift_recipient = foundRecipient;
 
-    // Only assign raw cleanText if NEITHER date nor recipient regex matched anything
+    // Only assign raw cleanText if NEITHER date nor recipient regex matched anything and not a generic filler
     if (!foundDate && !foundRecipient) {
-      if (!state.gift_recipient) {
-        state.gift_recipient = cleanText;
-      } else if (!state.required_date) {
-        state.required_date = cleanText;
+      if (!isGenericFiller(cleanText)) {
+        if (!state.gift_recipient) {
+          state.gift_recipient = cleanText;
+        } else if (!state.required_date) {
+          state.required_date = cleanText;
+        }
       }
     }
 
@@ -1108,8 +1118,10 @@ export async function handleQualificationFlow(
   }
 
   if (state.current_step === "JEWELRY_COLOR_SELECT") {
-    state.color = cleanText;
-    state.gemstone_type = cleanText;
+    if (!isGenericFiller(cleanText)) {
+      state.color = cleanText;
+      state.gemstone_type = cleanText;
+    }
     state.current_step = "JEWELRY_RECIPIENT_AND_DATE";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
@@ -1126,12 +1138,14 @@ export async function handleQualificationFlow(
     if (foundDate && !state.required_date) state.required_date = foundDate;
     if (foundRecipient && !state.gift_recipient) state.gift_recipient = foundRecipient;
 
-    // Only assign raw cleanText if NEITHER date nor recipient regex matched anything
+    // Only assign raw cleanText if NEITHER date nor recipient regex matched anything and not a generic filler
     if (!foundDate && !foundRecipient) {
-      if (!state.gift_recipient) {
-        state.gift_recipient = cleanText;
-      } else if (!state.required_date) {
-        state.required_date = cleanText;
+      if (!isGenericFiller(cleanText)) {
+        if (!state.gift_recipient) {
+          state.gift_recipient = cleanText;
+        } else if (!state.required_date) {
+          state.required_date = cleanText;
+        }
       }
     }
 
