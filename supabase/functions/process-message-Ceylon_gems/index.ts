@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { transcribeAudio } from "./transcribe.ts";
-import { handleQualificationFlow, getResumePromptForStep, loadFlowConfig } from "./qualificationFlow.ts";
+import { handleQualificationFlow, getResumePromptForStep, loadFlowConfig, getNotificationRecipients } from "./qualificationFlow.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -250,7 +250,7 @@ async function processMessage(
     return;
   }
 
-  // 3. Check if chat is taken over
+  // 3. Check if chat is taken over OR if lead is already qualified (Manual agent mode)
   const { data: takeoverData } = await supabase
     .from("chat_takeovers")
     .select("is_taken_over")
@@ -259,8 +259,40 @@ async function processMessage(
     .eq("is_taken_over", true)
     .maybeSingle();
 
-  if (takeoverData) {
-    console.log(`[${corrId}] Chat with ${phoneNumber} is taken over, skipping AI`);
+  let isChatTakenOver = !!takeoverData;
+
+  if (!isChatTakenOver) {
+    const { data: leadCheck } = await supabase
+      .from("leads")
+      .select("status, custom_fields")
+      .eq("user_id", userId)
+      .eq("phone_number", phoneNumber)
+      .maybeSingle();
+
+    if (leadCheck?.status === "qualified" || leadCheck?.custom_fields?.is_qualified === true) {
+      isChatTakenOver = true;
+      // Auto-sync into chat_takeovers table so UI and future queries see it as taken over
+      await supabase.from("chat_takeovers").upsert({
+        user_id: userId,
+        phone_number: phoneNumber,
+        is_taken_over: true,
+      }, { onConflict: "user_id,phone_number" });
+    }
+  }
+
+  if (isChatTakenOver) {
+    console.log(`[${corrId}] Chat with ${phoneNumber} is taken over (manual agent mode), checking for unanswered messages alert`);
+    await handleTakenOverChatInbound(
+      supabase,
+      supabaseUrl,
+      supabaseServiceKey,
+      userId,
+      phoneNumber,
+      senderName,
+      messageText,
+      sessionApiKey,
+      corrId
+    );
     return;
   }
 
@@ -858,5 +890,129 @@ async function maybeNotifyQualifiedLead(
     }
   } catch (e) {
     console.error(`[${corrId}] maybeNotifyQualifiedLead failed:`, (e as Error).message);
+  }
+}
+
+/**
+ * Handles incoming customer messages when chat is taken over (manual agent mode).
+ * Counts unanswered customer messages since last outbound reply.
+ * Alerts owner when 2 or more messages are waiting without an agent response.
+ */
+async function handleTakenOverChatInbound(
+  supabase: any,
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  userId: string,
+  phoneNumber: string,
+  senderName: string,
+  messageText: string,
+  sessionApiKey: string,
+  corrId: string
+) {
+  try {
+    // 1. Fetch recent messages to count consecutive unanswered inbound messages
+    const { data: recentMsgs } = await supabase
+      .from("conversations")
+      .select("direction, message, created_at")
+      .eq("user_id", userId)
+      .eq("phone_number", phoneNumber)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    let consecutiveInbound = 0;
+    if (recentMsgs && recentMsgs.length > 0) {
+      for (const m of recentMsgs) {
+        if (m.direction === "inbound") {
+          consecutiveInbound++;
+        } else if (m.direction === "outbound") {
+          break; // Stop counting at the last agent/bot reply
+        }
+      }
+    }
+
+    console.log(`[${corrId}] Taken-over chat ${phoneNumber} has ${consecutiveInbound} consecutive unanswered inbound message(s)`);
+
+    // 2. Alert threshold: 2 or more unanswered messages
+    if (consecutiveInbound >= 2) {
+      const { data: leadRow } = await supabase
+        .from("leads")
+        .select("custom_fields, customer_name")
+        .eq("user_id", userId)
+        .eq("phone_number", phoneNumber)
+        .maybeSingle();
+
+      const lastAlertAt = leadRow?.custom_fields?.last_unanswered_alert_at;
+      const now = Date.now();
+      const cooldownMs = 20 * 60 * 1000; // 20 minutes cooldown between alerts
+
+      // Check if human agent has replied since the last alert was sent
+      const lastOutboundMsg = recentMsgs?.find((m: any) => m.direction === "outbound");
+      const agentRepliedSinceAlert = lastOutboundMsg && lastAlertAt && new Date(lastOutboundMsg.created_at) > new Date(lastAlertAt);
+
+      const isWithinCooldown = lastAlertAt && (now - new Date(lastAlertAt).getTime()) < cooldownMs && !agentRepliedSinceAlert;
+
+      if (!isWithinCooldown) {
+        console.log(`[${corrId}] Triggering unanswered customer alert to owner for ${phoneNumber} (${consecutiveInbound} messages waiting)`);
+
+        // Load notification recipients from settings (phone, phone_2, phone_3, etc.)
+        const { data: notifSettings } = await supabase
+          .from("settings")
+          .select("value")
+          .eq("key", "order_notifications")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const recipients = getNotificationRecipients(notifSettings);
+        if (recipients.length > 0) {
+          const custDisplayName = senderName || leadRow?.customer_name || "Customer";
+          const alertMessage = 
+`⚠️ *CUSTOMER WAITING ALERT (MANUAL CHAT)* ⚠️
+
+👤 *Customer:* ${custDisplayName} (${phoneNumber})
+💬 *Status:* Chat Taken Over (Agent Attention Required)
+⏳ *Unanswered Messages:* ${consecutiveInbound} messages waiting without a reply!
+📝 *Latest Message:* "${(messageText || "").substring(0, 150)}"
+
+👉 *Open dashboard to reply:*
+https://ceylonagems.buildstart.io/dashboard/conversations`;
+
+          for (const recipientPhone of recipients) {
+            try {
+              await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-Ceylon_gems`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${supabaseServiceKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  to: recipientPhone,
+                  message: alertMessage,
+                  sessionApiKey,
+                }),
+              });
+            } catch (sendErr) {
+              console.warn(`[${corrId}] Failed sending takeover alert to ${recipientPhone}:`, sendErr);
+            }
+          }
+
+          // Record alert timestamp in leads.custom_fields
+          const updatedCustomFields = {
+            ...(leadRow?.custom_fields || {}),
+            last_unanswered_alert_at: new Date().toISOString(),
+            unanswered_count: consecutiveInbound,
+          };
+
+          await supabase
+            .from("leads")
+            .update({ custom_fields: updatedCustomFields })
+            .eq("user_id", userId)
+            .eq("phone_number", phoneNumber);
+        }
+      } else {
+        console.log(`[${corrId}] Alert cooldown active for ${phoneNumber} (last alert at ${lastAlertAt})`);
+      }
+    }
+  } catch (err) {
+    console.error(`[${corrId}] Error in handleTakenOverChatInbound:`, err);
   }
 }

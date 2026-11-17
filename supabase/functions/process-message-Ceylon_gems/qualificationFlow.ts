@@ -1413,6 +1413,13 @@ export async function handleQualificationFlow(
         custom_fields: { flow_state: state, is_qualified: true, handed_off_at: state.handed_off_at },
       }, { onConflict: "user_id,phone_number" });
 
+      // Automatically turn off bot (take over chat) for this qualified lead so human agent takes over
+      await supabase.from("chat_takeovers").upsert({
+        user_id: userId,
+        phone_number: phoneNumber,
+        is_taken_over: true,
+      }, { onConflict: "user_id,phone_number" });
+
       // Send owner & team notification alerts (multi-phone support)
       const notifMessage = `🌟 *NEW QUALIFIED LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* ${state.category}\n🛍️ *Item:* ${prod.name}\n${state.jewelry_type ? `💍 *Jewelry:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Size:* ${state.ring_size}\n` : ""}💰 *Budget:* ${state.budget_tier || "N/A"}\n🎁 *Recipient:* ${state.gift_recipient}\n📅 *Needed By:* ${state.required_date}\n💵 *Price Details:* ${priceDescription}\n\n👉 *Reply on WhatsApp to finalize!*`;
 

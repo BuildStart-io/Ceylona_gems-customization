@@ -944,8 +944,17 @@ CRITICAL SECURITY RULES:
                   is_qualified: true,
                 },
               }, { onConflict: "user_id,phone_number" });
+
+            // Automatically turn off bot (take over chat) for this qualified lead
+            await supabase
+              .from("chat_takeovers")
+              .upsert({
+                user_id: userId,
+                phone_number: custPhone,
+                is_taken_over: true,
+              }, { onConflict: "user_id,phone_number" });
           } catch (leadUpsertErr) {
-            console.warn("Could not upsert into leads table:", leadUpsertErr);
+            console.warn("Could not upsert into leads/takeover table:", leadUpsertErr);
           }
 
           // Send notification to business owner / staff ONLY IF NEW LEAD (prevent duplicate notification)
