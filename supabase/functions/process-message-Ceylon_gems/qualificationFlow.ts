@@ -622,6 +622,193 @@ export async function sendLeadNotifications(
   }
 }
 
+async function handoffToSalesAgent(
+  supabase: SupabaseClient,
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  userId: string,
+  phoneNumber: string,
+  senderName: string,
+  state: LeadFlowState,
+  flowConfig: ChatFlowConfig,
+  sessionApiKey: string
+): Promise<FlowExecutionResult> {
+  const prod = state.selected_product || { name: state.gemstone_type || "Ceylon Gem", price: state.budget_min || 10000 };
+  const actualPrice = prod.price || state.budget_min || 10000;
+  const isJewelry = state.category === "Silver Jewelry" || !!state.jewelry_type;
+  const silverSettingCost = flowConfig.categories?.jewelry?.silver_setting_cost || 5000;
+  const priceDescription = isJewelry
+    ? `LKR ${actualPrice.toLocaleString()} (Gemstone) + ~LKR ${silverSettingCost.toLocaleString()} (Silver Setting - to be confirmed by agent)`
+    : `LKR ${actualPrice.toLocaleString()}`;
+
+  const instructions = [
+    `🌟 QUALIFIED LEAD — CEYLONA GEMS`,
+    `💎 Category: ${state.category || "Gifting Gemstones"}`,
+    state.jewelry_type ? `💍 Jewelry Type: ${state.jewelry_type}` : null,
+    state.ring_size ? `💍 Ring Size: ${state.ring_size}` : null,
+    state.size ? `📏 Gem Size: ${state.size}` : null,
+    `🎨 Gemstone / Color: ${state.gemstone_type || state.color || prod.name}`,
+    `💰 Budget Bracket: ${state.budget_tier || "Standard"}`,
+    `🎁 Recipient: ${state.gift_recipient || "Special Someone"}`,
+    `📅 Needed By: ${state.required_date || "Not Specified"}`,
+    `🛍️ Selected Item: ${prod.name}`,
+    `💵 Price Details: ${priceDescription}`,
+    state.packaging_requested ? `📦 Packaging: ${state.packaging_requested}` : null,
+  ].filter(Boolean).join("\n");
+
+  await supabase.from("orders").insert({
+    user_id: userId,
+    customer_name: senderName || "Interested Customer",
+    customer_phone: phoneNumber,
+    whatsapp_phone: phoneNumber,
+    status: "qualified_lead",
+    payment_method: "bank_transfer",
+    total_amount: actualPrice,
+    special_instructions: instructions,
+    order_items: [
+      {
+        name: prod.name,
+        price: actualPrice,
+        quantity: 1,
+        product_type: "physical",
+        details: state,
+      },
+    ],
+  });
+
+  state.current_step = "HANDED_OFF";
+  state.handed_off_at = new Date().toISOString();
+  await supabase.from("leads").upsert({
+    user_id: userId,
+    phone_number: phoneNumber,
+    customer_name: senderName,
+    status: "qualified",
+    custom_fields: { flow_state: state, is_qualified: true, handed_off_at: state.handed_off_at },
+  }, { onConflict: "user_id,phone_number" });
+
+  await supabase.from("chat_takeovers").upsert({
+    user_id: userId,
+    phone_number: phoneNumber,
+    is_taken_over: true,
+  }, { onConflict: "user_id,phone_number" });
+
+  const notifMessage = `🌟 *NEW QUALIFIED LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* ${state.category}\n🛍️ *Item:* ${prod.name}\n${state.jewelry_type ? `💍 *Jewelry:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Size:* ${state.ring_size}\n` : ""}💰 *Budget:* ${state.budget_tier || "N/A"}\n🎁 *Recipient:* ${state.gift_recipient}\n📅 *Needed By:* ${state.required_date}\n💵 *Price Details:* ${priceDescription}\n\n👉 *Reply on WhatsApp to finalize!*`;
+
+  await sendLeadNotifications(supabase, supabaseUrl, supabaseServiceKey, userId, notifMessage, sessionApiKey);
+
+  const defaultReply = isJewelry
+    ? "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. ඔබ තෝරාගන්නා design එකට අදාළ silver setting සහ සම්පූර්ණ අවසන් මිල confirm කරගන්න අපේ sales specialist කෙනෙක් ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨"
+    : "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. අපේ sales specialist කෙනෙක් details confirm කරගන්න ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨";
+
+  const configuredHandoff = getStepMessage(flowConfig, "agent_handoff");
+  const replyConfirm = configuredHandoff || flowConfig.general_messages?.handoff_message?.trim() || defaultReply;
+
+  return {
+    handled: true,
+    replyText: replyConfirm,
+    isQualified: true,
+  };
+}
+
+async function answerItemQuestionsWithAi(
+  supabase: SupabaseClient,
+  userId: string,
+  state: LeadFlowState,
+  customerMessage: string
+): Promise<string> {
+  try {
+    const aiGenerateUrl = Deno.env.get("AI_GENERATE_URL");
+    const botApiKey = Deno.env.get("BOT_API_KEY");
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+
+    const fallbackAnswer = "අපේ Islandwide delivery දින 3–5ක් ඇතුළත Rs. 350 courier fee එකක් සමඟ සිදු වෙනවා. සියලුම gemstones සඳහා Government-Registered gem lab certificate එකක් ඇතුළත් කරලා තමයි ලබා දෙන්නේ. ✨ වැඩිදුර විස්තර අපේ sales specialist කෙනෙක් ඔබ සමඟ confirm කරනු ඇත.";
+
+    if (!aiGenerateUrl && !lovableApiKey) {
+      return fallbackAnswer;
+    }
+
+    const { data: faqs } = await supabase
+      .from("faqs")
+      .select("question, answer")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .limit(15);
+
+    const faqContext = (faqs || [])
+      .map((f: any) => `Q: ${f.question}\nA: ${f.answer}`)
+      .join("\n\n");
+
+    const prod = state.selected_product || { name: state.gemstone_type || "Ceylon Gem", price: state.budget_min || 10000 };
+    const systemPrompt = `You are the polite, knowledgeable WhatsApp Sales Assistant for "Ceylona Gems & Jewelry".
+The customer has configured an item and is asking questions about it before confirming with a sales agent.
+
+CUSTOMER'S SELECTED ITEM:
+- Item Name: ${prod.name}
+- Category: ${state.category || "Gemstones"}
+- Jewelry Type: ${state.jewelry_type || "N/A"}
+- Ring Size: ${state.ring_size || "N/A"}
+- Gem Size: ${state.size || "N/A"}
+- Price: LKR ${(prod.price || 10000).toLocaleString()}
+- Gift Recipient: ${state.gift_recipient || "Special Gift"}
+- Needed Delivery Date: ${state.required_date || "Soon"}
+- Packaging: ${state.packaging_requested || "Standard"}
+
+STORE FACTS & POLICIES:
+- 100% Genuine, natural Ceylon gemstones with Government-Registered Gem Lab Certificate included (worth LKR 1,500 included free).
+- Safe Islandwide courier delivery in 3 to 5 business days (Rs. 350 courier fee).
+- Payment: 100% safe Bank Transfer (COD is temporarily paused to ensure delivery quality and stone security).
+- Online boutique based in Wellampitiya, Colombo.
+- Solid 925 Sterling Silver handcrafted by master jewelers. Custom design references can be made.
+
+STORE FAQS:
+${faqContext}
+
+INSTRUCTIONS:
+1. Answer the customer's question directly, accurately, and warmly in the customer's language (matching Sinhala, Tamil, or English).
+2. Keep the answer concise (2 to 4 sentences).
+3. Do NOT make false promises. If asking for a discount, custom design, or specific delivery guarantee, state what is possible and mention our sales agent will assist with specific requests during confirmation.
+4. Output ONLY the response text to the customer.`;
+
+    const MODEL = "google/gemini-2.5-flash";
+    let aiRes: Response;
+
+    if (aiGenerateUrl && botApiKey) {
+      aiRes = await fetch(aiGenerateUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-bot-key": botApiKey },
+        body: JSON.stringify({
+          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: customerMessage }],
+          model: MODEL,
+          maxTokens: 300,
+        }),
+      });
+    } else {
+      aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: customerMessage }],
+          max_tokens: 300,
+        }),
+      });
+    }
+
+    if (aiRes.ok) {
+      const data = await aiRes.json();
+      const reply = data.choices?.[0]?.message?.content?.trim() || data.reply?.trim();
+      if (reply) return reply;
+    }
+  } catch (err) {
+    console.warn("[answerItemQuestionsWithAi] AI error:", err);
+  }
+
+  return "අපේ Islandwide delivery දින 3–5ක් ඇතුළත Rs. 350 courier fee එකක් සමඟ සිදු වෙනවා. සියලුම gemstones සඳහා Government-Registered gem lab certificate එකක් ඇතුළත් කරලා තමයි ලබා දෙන්නේ. ✨ වැඩිදුර විස්තර අපේ sales specialist කෙනෙක් ඔබ සමඟ confirm කරනු ඇත.";
+}
+
 export async function handleQualificationFlow(
   supabase: SupabaseClient,
   supabaseUrl: string,
@@ -1449,8 +1636,8 @@ export async function handleQualificationFlow(
       poll: {
         name: "✨ Confirm කරලා proceed කරන්නද?",
         options: [
-          "✅ ඔව්, Confirm කරන්න! (Proceed)",
-          "🔄 වෙනස් කරන්න (Change)",
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed)",
+          "🤖 AI ගෙන් විස්තර අහන්න (Ask Details)",
         ],
         multipleAnswers: false,
       },
@@ -1508,8 +1695,8 @@ export async function handleQualificationFlow(
       poll: {
         name: "✨ Confirm කරලා proceed කරන්නද?",
         options: [
-          "✅ ඔව්, Confirm කරන්න! (Proceed)",
-          "🔄 වෙනස් කරන්න (Change)",
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed)",
+          "🤖 AI ගෙන් විස්තර අහන්න (Ask Details)",
         ],
         multipleAnswers: false,
       },
@@ -1517,92 +1704,67 @@ export async function handleQualificationFlow(
   }
 
   // --------------------------------------------------------------------------
-  // STEP: CONFIRMATION & LEAD HANDOFF
+  // STEP: CONFIRMATION & SELECTION FORK
   // --------------------------------------------------------------------------
   if (state.current_step === "CONFIRMATION") {
-    if (lower.includes("confirm") || lower.includes("yes") || lower.includes("ඔව්") || lower.includes("ow") || lower.includes("proceed") || lower.includes("hari") || lower.includes("1")) {
-      // QUALIFIED LEAD RECORD CREATION
+    // 1. Did the customer choose Sales Agent / Direct Confirmation?
+    const isConfirmChoice =
+      lower.includes("sales agent") ||
+      lower.includes("agent") ||
+      lower.includes("proceed") ||
+      lower.includes("confirm") ||
+      lower.includes("1") ||
+      /^(yes|ow|ඔව්|hari|හරි|ok|okay)$/i.test(cleanText.trim());
+
+    if (isConfirmChoice) {
+      return await handoffToSalesAgent(
+        supabase,
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        phoneNumber,
+        senderName,
+        state,
+        flowConfig,
+        sessionApiKey
+      );
+    }
+
+    // 2. Did the customer choose AI consultation?
+    const isAiChoice =
+      lower.includes("ai") ||
+      lower.includes("විස්තර") ||
+      lower.includes("details") ||
+      lower.includes("ask") ||
+      lower.includes("2");
+
+    if (isAiChoice) {
+      state.current_step = "AI_CONSULTATION";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
       const prod = state.selected_product || { name: state.gemstone_type || "Ceylon Gem", price: state.budget_min || 10000 };
-      const actualPrice = prod.price || state.budget_min || 10000;
-      const isJewelry = state.category === "Silver Jewelry" || !!state.jewelry_type;
-      const silverSettingCost = flowConfig.categories?.jewelry?.silver_setting_cost || 5000;
-      const priceDescription = isJewelry
-        ? `LKR ${actualPrice.toLocaleString()} (Gemstone) + ~LKR ${silverSettingCost.toLocaleString()} (Silver Setting - to be confirmed by agent)`
-        : `LKR ${actualPrice.toLocaleString()}`;
+      const itemName = prod.name || "Ceylon Gem";
+      const itemPrice = prod.price ? `(LKR ${prod.price.toLocaleString()})` : "";
+      const jewelryInfo = state.jewelry_type ? ` [${state.jewelry_type}]` : "";
 
-      const instructions = [
-        `🌟 QUALIFIED LEAD — CEYLONA GEMS`,
-        `💎 Category: ${state.category || "Gifting Gemstones"}`,
-        state.jewelry_type ? `💍 Jewelry Type: ${state.jewelry_type}` : null,
-        state.ring_size ? `💍 Ring Size: ${state.ring_size}` : null,
-        state.size ? `📏 Gem Size: ${state.size}` : null,
-        `🎨 Gemstone / Color: ${state.gemstone_type || state.color || prod.name}`,
-        `💰 Budget Bracket: ${state.budget_tier || "Standard"}`,
-        `🎁 Recipient: ${state.gift_recipient || "Special Someone"}`,
-        `📅 Needed By: ${state.required_date || "Not Specified"}`,
-        `🛍️ Selected Item: ${prod.name}`,
-        `💵 Price Details: ${priceDescription}`,
-        state.packaging_requested ? `📦 Packaging: ${state.packaging_requested}` : null,
-      ].filter(Boolean).join("\n");
-
-      // Insert qualified lead order into Ceylon_gems.orders
-      await supabase.from("orders").insert({
-        user_id: userId,
-        customer_name: senderName || "Interested Customer",
-        customer_phone: phoneNumber,
-        whatsapp_phone: phoneNumber,
-        status: "qualified_lead",
-        payment_method: "bank_transfer",
-        total_amount: actualPrice,
-        special_instructions: instructions,
-        order_items: [
-          {
-            name: prod.name,
-            price: actualPrice,
-            quantity: 1,
-            product_type: "physical",
-            details: state,
-          },
-        ],
-      });
-
-      // Update lead status to qualified
-      state.current_step = "HANDED_OFF";
-      state.handed_off_at = new Date().toISOString();
-      await supabase.from("leads").upsert({
-        user_id: userId,
-        phone_number: phoneNumber,
-        customer_name: senderName,
-        status: "qualified",
-        custom_fields: { flow_state: state, is_qualified: true, handed_off_at: state.handed_off_at },
-      }, { onConflict: "user_id,phone_number" });
-
-      // Automatically turn off bot (take over chat) for this qualified lead so human agent takes over
-      await supabase.from("chat_takeovers").upsert({
-        user_id: userId,
-        phone_number: phoneNumber,
-        is_taken_over: true,
-      }, { onConflict: "user_id,phone_number" });
-
-      // Send owner & team notification alerts (multi-phone support)
-      const notifMessage = `🌟 *NEW QUALIFIED LEAD — Ceylona Gems!*\n\n👤 *Customer:* ${senderName || "Customer"}\n📱 *Phone:* ${phoneNumber}\n💎 *Category:* ${state.category}\n🛍️ *Item:* ${prod.name}\n${state.jewelry_type ? `💍 *Jewelry:* ${state.jewelry_type}\n` : ""}${state.ring_size ? `💍 *Size:* ${state.ring_size}\n` : ""}💰 *Budget:* ${state.budget_tier || "N/A"}\n🎁 *Recipient:* ${state.gift_recipient}\n📅 *Needed By:* ${state.required_date}\n💵 *Price Details:* ${priceDescription}\n\n👉 *Reply on WhatsApp to finalize!*`;
-
-      await sendLeadNotifications(supabase, supabaseUrl, supabaseServiceKey, userId, notifMessage, sessionApiKey);
-
-      const defaultReply = isJewelry
-        ? "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. ඔබ තෝරාගන්නා design එකට අදාළ silver setting සහ සම්පූර්ණ අවසන් මිල confirm කරගන්න අපේ sales specialist කෙනෙක් ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨"
-        : "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. අපේ sales specialist කෙනෙක් details confirm කරගන්න ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨";
-
-      const configuredHandoff = getStepMessage(flowConfig, "agent_handoff");
-      const replyConfirm = configuredHandoff || flowConfig.general_messages?.handoff_message?.trim() || defaultReply;
+      const welcomeText = `කිසි ප්‍රශ්නයක් නෑ! 🤖💎 ඔබ තෝරාගත් *${itemName}*${jewelryInfo} ${itemPrice}, Delivery, Certificate, Payment හෝ වෙනත් කරුණු ගැන දැනගන්න ඕනෙ ඕනෑම දෙයක් මේ chat එකෙන් අහන්න. මම උදව් කරන්න සූදානම්! ✨\n\nඔබේ ප්‍රශ්නය type කරලා එවන්න 👇`;
 
       return {
         handled: true,
-        replyText: replyConfirm,
-        isQualified: true,
+        replyText: welcomeText,
+        poll: {
+          name: "✨ ඔබ කැමති option එක තෝරන්න:",
+          options: [
+            "👤 Sales Agent සම්බන්ධ කරන්න (Proceed)",
+            "💬 තව ප්‍රශ්නයක් අහන්න (Ask Question)",
+          ],
+          multipleAnswers: false,
+        },
       };
-    } else {
-      // User tapped "Change"
+    }
+
+    // 3. Did the customer choose Change / Restart?
+    if (lower.includes("change") || lower.includes("reset") || lower.includes("වෙනස්") || lower.includes("restart") || lower.includes("මුල සිට")) {
       state.current_step = "CATEGORY_SELECT";
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
@@ -1616,6 +1778,94 @@ export async function handleQualificationFlow(
         },
       };
     }
+
+    // Fallback: If customer typed a question directly at confirmation step, answer it with AI!
+    state.current_step = "AI_CONSULTATION";
+    await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+    const aiAnswer = await answerItemQuestionsWithAi(supabase, userId, state, cleanText);
+    const replyText = `${aiAnswer}\n\n✨ තවත් දැනගැනීමට අවශ්‍ය දෙයක් ඇත්නම් අහන්න. සියල්ල හරි නම්, Sales specialist කෙනෙක් සම්බන්ධ කරගැනීමට පහළින් තෝරන්න: 👇`;
+
+    return {
+      handled: true,
+      replyText,
+      poll: {
+        name: "✨ ඔබ කැමති option එක තෝරන්න:",
+        options: [
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed)",
+          "💬 තව ප්‍රශ්නයක් අහන්න (Ask Question)",
+        ],
+        multipleAnswers: false,
+      },
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // STEP: AI CONSULTATION (Q&A before Sales Agent handoff)
+  // --------------------------------------------------------------------------
+  if (state.current_step === "AI_CONSULTATION") {
+    // 1. Did the customer request Sales Agent / Confirmation?
+    const isAgentRequest =
+      lower.includes("sales agent") ||
+      lower.includes("agent") ||
+      lower.includes("human") ||
+      lower.includes("call me") ||
+      lower.includes("proceed") ||
+      lower.includes("confirm") ||
+      /^(yes|ow|ඔව්|hari|හරි|ok|okay|1|confirm|proceed)$/i.test(cleanText.trim());
+
+    if (isAgentRequest) {
+      return await handoffToSalesAgent(
+        supabase,
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        phoneNumber,
+        senderName,
+        state,
+        flowConfig,
+        sessionApiKey
+      );
+    }
+
+    // 2. Did the customer ask to change / restart?
+    if (lower.includes("change") || lower.includes("reset") || lower.includes("වෙනස්") || lower.includes("restart") || lower.includes("මුල සිට")) {
+      state.current_step = "CATEGORY_SELECT";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+      return {
+        handled: true,
+        replyText: getStepMessage(flowConfig, "restart_flow"),
+        poll: {
+          name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
+          options: getCategoryPollOptions(flowConfig),
+          multipleAnswers: false,
+        },
+      };
+    }
+
+    // 3. Did the customer tap "Ask Question" poll button?
+    if (lower.includes("තව ප්‍රශ්නයක්") || lower.includes("ask question") || lower === "2") {
+      return {
+        handled: true,
+        replyText: "කිසි ප්‍රශ්නයක් නෑ! 💬 ඔබ දැනගන්න කැමති ප්‍රශ්නය මේ chat එකට type කරලා එවන්න. මම විස්තර ලබා දෙන්නම්! ✨",
+      };
+    }
+
+    // 4. Customer asked a question! Answer with AI using full item context
+    const aiAnswer = await answerItemQuestionsWithAi(supabase, userId, state, cleanText);
+    const replyText = `${aiAnswer}\n\n✨ තවත් දැනගැනීමට අවශ්‍ය දෙයක් ඇත්නම් අහන්න. සියල්ල හරි නම්, Sales specialist කෙනෙක් සම්බන්ධ කරගැනීමට පහළින් තෝරන්න: 👇`;
+
+    return {
+      handled: true,
+      replyText,
+      poll: {
+        name: "✨ ඔබ කැමති option එක තෝරන්න:",
+        options: [
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed)",
+          "💬 තව ප්‍රශ්නයක් අහන්න (Ask Question)",
+        ],
+        multipleAnswers: false,
+      },
+    };
   }
 
   if (state.current_step === "QUALIFIED_COMPLETE") {
@@ -1656,7 +1906,9 @@ function isStepMatchingInput(step: string, text: string): boolean {
     case "PRODUCT_SELECTION":
       return lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("first") || lower.includes("second") || lower.includes("third") || lower.includes("gemstone") || lower.includes("sapphire") || lower.includes("ring") || lower.includes("pendant") || lower.includes("silver") || lower.includes("solid") || lower.includes("ruby") || lower.includes("amethyst") || lower.includes("halo") || lower.includes("solitaire");
     case "CONFIRMATION":
-      return lower.includes("confirm") || lower.includes("yes") || lower.includes("ඔව්") || lower.includes("ow") || lower.includes("change") || lower.includes("1") || lower.includes("2");
+      return lower.includes("confirm") || lower.includes("yes") || lower.includes("ඔව්") || lower.includes("ow") || lower.includes("change") || lower.includes("1") || lower.includes("2") || lower.includes("agent") || lower.includes("ai");
+    case "AI_CONSULTATION":
+      return true;
     default:
       return false;
   }
@@ -1760,8 +2012,20 @@ export function getResumePromptForStep(state: LeadFlowState, flowConfig?: ChatFl
         poll: {
           name: "✨ Confirm කරලා proceed කරන්නද?",
           options: [
-            "✅ ඔව්, Confirm කරන්න! (Proceed)",
-            "🔄 වෙනස් කරන්න (Change)",
+            "👤 Sales Agent සම්බන්ධ කරන්න (Proceed)",
+            "🤖 AI ගෙන් විස්තර අහන්න (Ask Details)",
+          ],
+          multipleAnswers: false,
+        },
+      };
+    case "AI_CONSULTATION":
+      return {
+        text: "ඔබට දැනගැනීමට අවශ්‍ය ප්‍රශ්නය මේ chat එකට එවන්න, නැතහොත් Sales Specialist කෙනෙක් සම්බන්ධ කරගැනීමට පහළින් තෝරන්න: 👇",
+        poll: {
+          name: "✨ ඔබ කැමති option එක තෝරන්න:",
+          options: [
+            "👤 Sales Agent සම්බන්ධ කරන්න (Proceed)",
+            "💬 තව ප්‍රශ්නයක් අහන්න (Ask Question)",
           ],
           multipleAnswers: false,
         },
