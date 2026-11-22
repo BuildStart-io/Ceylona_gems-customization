@@ -1213,10 +1213,9 @@ export async function handleQualificationFlow(
       poll: {
         name: "📏 Gemstone එකේ Size එක තෝරන්න:",
         options: [
-          "🔹 Small Size (Delicate)",
-          "🔹 Medium Size (Classic)",
-          "🔹 Large Size (Statement)",
-          "🔹 Custom Luxury Size",
+          "🔹 Small Size (Small Gift)",
+          "🔹 Medium Size (Ideal Gift or Ring)",
+          "🔹 Large Size (Gift / Pendant)",
         ],
         multipleAnswers: false,
       },
@@ -1224,19 +1223,30 @@ export async function handleQualificationFlow(
   }
 
   if (state.current_step === "GEM_SIZE_SELECT") {
-    let chosenSize = "Medium Size";
-    if (lower.includes("small") || lower.includes("1")) chosenSize = "Small Size";
-    else if (lower.includes("large") || lower.includes("3")) chosenSize = "Large Size";
-    else if (lower.includes("custom") || lower.includes("luxury") || lower.includes("4")) chosenSize = "Custom Luxury Size";
+    let chosenSize = "Medium Size (Ideal Gift or Ring)";
+    if (lower.includes("small") || lower === "1") chosenSize = "Small Size (Small Gift)";
+    else if (lower.includes("large") || lower.includes("pendant") || lower === "3") chosenSize = "Large Size (Gift / Pendant)";
+    else if (lower.includes("medium") || lower.includes("ring") || lower === "2") chosenSize = "Medium Size (Ideal Gift or Ring)";
 
     state.size = chosenSize;
-    state.current_step = "GEM_RECIPIENT_AND_DATE";
-    await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
-    return {
-      handled: true,
-      replyText: getStepMessage(flowConfig, "gem_recipient_date"),
-    };
+    if (state.category === "Silver Jewelry" || !!state.jewelry_type) {
+      state.current_step = "JEWELRY_RECIPIENT_AND_DATE";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+      return {
+        handled: true,
+        replyText: getStepMessage(flowConfig, "jewelry_recipient_date"),
+      };
+    } else {
+      state.current_step = "GEM_RECIPIENT_AND_DATE";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+      return {
+        handled: true,
+        replyText: getStepMessage(flowConfig, "gem_recipient_date"),
+      };
+    }
   }
 
   if (state.current_step === "GEM_RECIPIENT_AND_DATE") {
@@ -1464,6 +1474,28 @@ export async function handleQualificationFlow(
       state.color = cleanText;
       state.gemstone_type = cleanText;
     }
+
+    const isPendant = (state.jewelry_type || "").toLowerCase().includes("pendant");
+    if (isPendant) {
+      state.current_step = "GEM_SIZE_SELECT";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+      const sizePrompt = getStepMessage(flowConfig, "gem_size");
+      return {
+        handled: true,
+        replyText: sizePrompt,
+        poll: {
+          name: "📏 Pendant Gemstone එකේ Size එක තෝරන්න:",
+          options: [
+            "🔹 Small Size (Small Gift)",
+            "🔹 Medium Size (Ideal Gift or Ring)",
+            "🔹 Large Size (Gift / Pendant)",
+          ],
+          multipleAnswers: false,
+        },
+      };
+    }
+
     state.current_step = "JEWELRY_RECIPIENT_AND_DATE";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
@@ -1894,7 +1926,7 @@ function isStepMatchingInput(step: string, text: string): boolean {
     case "JEWELRY_COLOR_SELECT":
       return !text.includes("?") && !lower.includes("delivery") && !lower.includes("cod") && !lower.includes("location");
     case "GEM_SIZE_SELECT":
-      return lower.includes("small") || lower.includes("medium") || lower.includes("large") || lower.includes("luxury") || lower.includes("custom") || lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("4");
+      return lower.includes("small") || lower.includes("medium") || lower.includes("large") || lower.includes("ideal") || lower.includes("pendant") || lower.includes("ring") || lower.includes("gift") || lower.includes("1") || lower.includes("2") || lower.includes("3");
     case "JEWELRY_TYPE_SELECT":
       return lower.includes("ring") || lower.includes("pendant") || lower.includes("custom") || lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("solid");
     case "RING_SIZE_SELECT":
@@ -1967,12 +1999,13 @@ export function getResumePromptForStep(state: LeadFlowState, flowConfig?: ChatFl
       return {
         text: getStepMessage(cfg, "gem_size"),
         poll: {
-          name: "📏 Gemstone එකේ Size එක තෝරන්න:",
+          name: state.jewelry_type?.toLowerCase().includes("pendant")
+            ? "📏 Pendant Gemstone එකේ Size එක තෝරන්න:"
+            : "📏 Gemstone එකේ Size එක තෝරන්න:",
           options: [
-            "🔹 Small Size (Delicate)",
-            "🔹 Medium Size (Classic)",
-            "🔹 Large Size (Statement)",
-            "🔹 Custom Luxury Size",
+            "🔹 Small Size (Small Gift)",
+            "🔹 Medium Size (Ideal Gift or Ring)",
+            "🔹 Large Size (Gift / Pendant)",
           ],
           multipleAnswers: false,
         },

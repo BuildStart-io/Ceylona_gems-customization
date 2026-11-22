@@ -82,7 +82,7 @@ export const DEFAULT_FLOW_STEPS: Record<string, { label: string; desc: string; d
   },
   gem_size: {
     label: "Step 4: Gemstone Size Selection Prompt",
-    desc: "Asks customer to pick between Small, Medium, Large, or Custom size.",
+    desc: "Asks customer to pick between Small (Small Gift), Medium (Ideal Gift or Ring), or Large (Gift / Pendant) size.",
     defaultText: "නියමයි! 💎 ඔයා බලාපොරොත්තු වෙන Gemstone Size එක පහළින් තෝරන්නකෝ 👇",
   },
   gem_recipient_date: {
