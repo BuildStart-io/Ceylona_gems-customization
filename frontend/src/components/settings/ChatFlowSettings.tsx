@@ -77,8 +77,8 @@ export const DEFAULT_FLOW_STEPS: Record<string, { label: string; desc: string; d
   },
   gem_color: {
     label: "Step 3: Gemstone Color / Type Preference Question",
-    desc: "Asks customer which specific stone or color they prefer (e.g. Blue Sapphire, Ruby).",
-    defaultText: "Budget එක සටහන් කරගත්තා! 💰💎\nඔබ විශේෂයෙන් සොයන Gemstone වර්ගයක් හෝ පාටක් (Color) තියෙනවද? (උදා: Blue Sapphire, Ruby, Yellow Sapphire, Amethyst, etc.)\nනැත්නම් 'ඕනෑම පාටක්' කියලා කියන්නත් පුළුවන් ✨",
+    desc: "Asks customer which specific stone or color they prefer (e.g. Blue Sapphire, Amethyst, Emerald).",
+    defaultText: "Budget එක සටහන් කරගත්තා! 💰💎\nඔබ විශේෂයෙන් සොයන Gemstone වර්ගයක් හෝ පාටක් (Color) තියෙනවද? (උදා: Blue Sapphire, Amethyst, Emerald, Aquamarine, etc.)\nනැත්නම් 'ඕනෑම පාටක්' කියලා කියන්නත් පුළුවන් ✨",
   },
   gem_size: {
     label: "Step 4: Gemstone Size Selection Prompt",
@@ -103,7 +103,7 @@ export const DEFAULT_FLOW_STEPS: Record<string, { label: string; desc: string; d
   jewelry_color: {
     label: "Step 8: Jewelry Gemstone & Color Preference Question",
     desc: "Asks customer for their preferred gemstone color to embed into the silver piece.",
-    defaultText: "නියමයි! 💍 Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Ruby, Pink, White, etc.)",
+    defaultText: "නියමයි! 💍 Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Emerald, Amethyst, etc.)",
   },
   jewelry_budget: {
     label: "Step 9: Silver Jewelry Budget Selection Prompt",

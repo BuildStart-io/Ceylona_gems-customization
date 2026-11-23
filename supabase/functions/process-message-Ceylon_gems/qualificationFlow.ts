@@ -378,7 +378,7 @@ export const DEFAULT_FLOW_STEPS: Record<string, FlowStepConfig> = {
     main_text: "නියමයි! 💎 අපේ හැම gemstone එකකටම රජයේ ලියාපදිංචි Gem Lab Certificate එකක් ඇතුළත් කරලා තියෙන්නේ (LKR 1,500ක සහතිකයක් මිලටම ඇතුළත්). ✨\n\nඔයා බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
   },
   gem_color: {
-    main_text: "Budget එක සටහන් කරගත්තා! 💰💎\nඔබ විශේෂයෙන් සොයන Gemstone වර්ගයක් හෝ පාටක් (Color) තියෙනවද? (උදා: Blue Sapphire, Ruby, Yellow Sapphire, Amethyst, etc.)\nනැත්නම් 'ඕනෑම පාටක්' කියලා කියන්නත් පුළුවන් ✨",
+    main_text: "Budget එක සටහන් කරගත්තා! 💰💎\nඔබ විශේෂයෙන් සොයන Gemstone වර්ගයක් හෝ පාටක් (Color) තියෙනවද? (උදා: Blue Sapphire, Amethyst, Emerald, Aquamarine, etc.)\nනැත්නම් 'ඕනෑම පාටක්' කියලා කියන්නත් පුළුවන් ✨",
   },
   gem_size: {
     main_text: "නියමයි! 💎 ඔයා බලාපොරොත්තු වෙන Gemstone Size එක පහළින් තෝරන්නකෝ 👇",
@@ -393,7 +393,7 @@ export const DEFAULT_FLOW_STEPS: Record<string, FlowStepConfig> = {
     main_text: "Solid 925 Silver Rings! 💍✨ ඔයාගෙ Ring Size එක දන්නවද? (උදා: US 6, 7, 8 හෝ 'දන්නේ නෑ' කියලා කියන්න පුළුවන්) ✨",
   },
   jewelry_color: {
-    main_text: "නියමයි! 💍 Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Ruby, Pink, White, etc.)",
+    main_text: "නියමයි! 💍 Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Emerald, Amethyst, etc.)",
   },
   jewelry_budget: {
     main_text: "Silver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
@@ -1197,14 +1197,53 @@ export async function handleQualificationFlow(
     state.current_step = "GEM_SIZE_SELECT";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
-    // Check if the requested color/stone matches catalog
-    const colorLower = cleanText.toLowerCase();
-    const availableColors = ["blue", "pink", "yellow", "red", "green", "purple", "pushparaga", "ruby", "sapphire", "amethyst", "garnet", "tsavorite", "නිල්", "රතු", "කහ", "රෝස", "දම්", "පච්ච"];
-    const isColorAvailable = availableColors.some(c => colorLower.includes(c));
+    // Future-proof dynamic catalog check:
+    const colorLower = cleanText.toLowerCase().trim();
+    let colorNote = "";
 
-    const colorNote = (!isColorAvailable && colorLower !== "any" && colorLower !== "kisi" && colorLower !== "ona ekak" && colorLower !== "all" && !isGenericFiller(cleanText))
-      ? `(${cleanText} natural gems stock එකේ නැති වුණත්, අපේ popular Royal Blue, Baby Pink, Ruby Red, Golden Yellow sapphire සහ Purple Amethyst වලින් හොඳම gemstone එකක් තෝරගන්න පුළුවන් ✨)\n\n`
-      : "";
+    const isAnyOrGeneric = colorLower === "any" || colorLower === "all" || colorLower === "kisi" || colorLower === "ona ekak" || colorLower === "ona" || isGenericFiller(cleanText) || cleanText.includes("?") || cleanText.length < 2;
+
+    if (!isAnyOrGeneric) {
+      try {
+        const { data: dbProducts } = await supabase
+          .from("products")
+          .select("name, description")
+          .eq("user_id", userId)
+          .eq("is_active", true);
+
+        const gemPool = (dbProducts || []).filter((p: any) => {
+          const n = (p.name || "").toLowerCase();
+          return !n.includes("box") && !n.includes("card") && !n.includes("hamper") && !n.includes("packaging");
+        });
+
+        // Common color keywords that map to real gemstones
+        const genericColors = [
+          "blue", "pink", "yellow", "red", "green", "purple", "white", "ocean",
+          "නිල්", "රතු", "කහ", "රෝස", "දම්", "පච්ච", "කොළ", "සුදු"
+        ];
+
+        const matchesProduct = gemPool.some((p: any) => {
+          const pName = (p.name || "").toLowerCase();
+          const pDesc = (p.description || "").toLowerCase();
+          return pName.includes(colorLower) || colorLower.includes(pName) || pDesc.includes(colorLower);
+        });
+
+        const matchesGenericColor = genericColors.some((c) => colorLower.includes(c));
+
+        if (!matchesProduct && !matchesGenericColor) {
+          // Customer asked for something not in the store's active catalog (e.g. Diamond, Ruby, or unlisted item)
+          const topGems = Array.from(new Set(gemPool.map((p: any) => p.name)))
+            .slice(0, 3)
+            .join(", ");
+
+          if (topGems) {
+            colorNote = `(${cleanText} natural gems stock එකේ නැති වුණත්, අපේ popular ${topGems} වලින් gemstone එකක් තෝරගන්න පුළුවන් ✨)\n\n`;
+          }
+        }
+      } catch (err) {
+        console.warn("[GEM_COLOR_SELECT] Dynamic catalog check failed, continuing safely:", err);
+      }
+    }
 
     const sizePrompt = getStepMessage(flowConfig, "gem_size");
     return {
@@ -1936,7 +1975,7 @@ function isStepMatchingInput(step: string, text: string): boolean {
     case "PACKAGING_RECIPIENT_AND_DATE":
       return Boolean(extractDate(text) || extractRecipient(text));
     case "PRODUCT_SELECTION":
-      return lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("first") || lower.includes("second") || lower.includes("third") || lower.includes("gemstone") || lower.includes("sapphire") || lower.includes("ring") || lower.includes("pendant") || lower.includes("silver") || lower.includes("solid") || lower.includes("ruby") || lower.includes("amethyst") || lower.includes("halo") || lower.includes("solitaire");
+      return lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("first") || lower.includes("second") || lower.includes("third") || lower.includes("gemstone") || lower.includes("sapphire") || lower.includes("ring") || lower.includes("pendant") || lower.includes("silver") || lower.includes("solid") || lower.includes("emerald") || lower.includes("amethyst") || lower.includes("halo") || lower.includes("solitaire");
     case "CONFIRMATION":
       return lower.includes("confirm") || lower.includes("yes") || lower.includes("ඔව්") || lower.includes("ow") || lower.includes("change") || lower.includes("1") || lower.includes("2") || lower.includes("agent") || lower.includes("ai");
     case "AI_CONSULTATION":
