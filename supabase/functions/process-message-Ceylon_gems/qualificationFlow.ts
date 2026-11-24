@@ -976,7 +976,10 @@ export async function handleQualificationFlow(
     lower.includes("silver jewelry") ||
     lower.includes("rings & pendants") ||
     lower === "💍 silver jewelry (rings & pendants)" ||
-    (state.category === "Gifting Gemstone" && (lower.includes("silver") || lower.includes("ring") || lower.includes("pendant") || lower.includes("රිදී"))) ||
+    (state.category === "Gifting Gemstone" &&
+      state.current_step !== "GEM_SIZE_SELECT" &&
+      !lower.startsWith("🔹") &&
+      (lower.includes("silver jewelry") || lower.includes("silver ring") || lower.includes("silver pendant") || lower.includes("රිදී ආභරණ") || lower === "jewelry" || lower === "jewellery")) ||
     (state.current_step === "CATEGORY_SELECT" && (lower.includes("jewelry") || lower.includes("silver") || lower.includes("රිදී") || lower.includes("ring") || lower.includes("pendant") || (currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) !== -1 && lower === String(currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) + 1))));
 
   const isGiftPackagingVote =
