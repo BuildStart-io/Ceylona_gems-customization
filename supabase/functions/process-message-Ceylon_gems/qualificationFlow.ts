@@ -33,6 +33,7 @@ export interface LeadFlowState {
   selected_product?: any;
   custom_request?: string;
   handed_off_at?: string;
+  last_voted_at?: string;
 }
 
 // ----------------------------------------------------------------------------
@@ -848,6 +849,31 @@ export async function handleQualificationFlow(
 
   console.log(`[FlowController] Phone: ${phoneNumber} | Step: ${state.current_step} | Input: "${cleanText}" (type: ${messageType})`);
 
+  // 1. Ignore empty poll votes (e.g. WhatsApp sending empty payload when deselecting an option)
+  if (messageType === "poll_vote" && (!cleanText || cleanText.trim().length === 0 || lower === "[]")) {
+    console.log(`[FlowController] Ignoring empty poll vote for ${phoneNumber}`);
+    return { handled: true };
+  }
+
+  // 2. Debounce: Drop rapid successive poll votes within 2.5 seconds (2500ms)
+  // WhatsApp allows rapid clicking or deselecting, which can emit multiple events within hundreds of milliseconds.
+  const isPollVote =
+    messageType === "poll_vote" ||
+    lower.startsWith("🔹") ||
+    lower.startsWith("1️⃣") ||
+    lower.startsWith("2️⃣") ||
+    lower.startsWith("3️⃣") ||
+    lower.startsWith("✅") ||
+    lower.startsWith("🔄");
+
+  if (isPollVote && state.last_voted_at) {
+    const elapsedMs = Date.now() - new Date(state.last_voted_at).getTime();
+    if (elapsedMs < 2500) {
+      console.log(`[FlowController] Debouncing rapid poll vote for ${phoneNumber} (${elapsedMs}ms < 2500ms). Ignored.`);
+      return { handled: true };
+    }
+  }
+
   // Check if explicit reset/restart is requested (e.g. "start", "reset", "begin", "menu", "මුල සිට")
   const isExplicitReset = /^(start|begin|restart|reset|menu|main menu|home|options|මුල සිට|අලුත්|ආපසු|new order|new gift|මෙනු|மீண்டும்|ஆரம்பம்)$/i.test(lower);
   // General greetings reset to START if lead is NOT already qualified or if manual takeover was released
@@ -963,30 +989,67 @@ export async function handleQualificationFlow(
   // --------------------------------------------------------------------------
   // GLOBAL CATEGORY SWITCH GUARD (WhatsApp Poll One-Touch & Category Change)
   // --------------------------------------------------------------------------
-  // If the user taps a Category poll option or requests a Category at ANY time,
-  // immediately transition cleanly to that Category flow, wiping any stale cross-category fields.
   const currentCategoryPollOptions = getCategoryPollOptions(flowConfig);
 
-  const isGiftingGemstonesVote =
-    lower.includes("gifting gemstone") ||
+  const isCategoryPollVote =
     lower === "💎 gifting gemstones" ||
-    (state.current_step === "CATEGORY_SELECT" && (lower.includes("gemstone") || lower.includes("මැණික්") || (currentCategoryPollOptions[0] && lower === "1" && currentCategoryPollOptions[0].toLowerCase().includes("gemstone"))));
+    lower.includes("gifting gemstone") ||
+    lower === "💍 silver jewelry (rings & pendants)" ||
+    lower.includes("silver jewelry (rings & pendants)") ||
+    lower === "🎁 gift packaging & cards" ||
+    lower.includes("gift packaging & cards");
+
+  const isAtCategoryStep =
+    state.current_step === "CATEGORY_SELECT" ||
+    state.current_step === "START" ||
+    !state.category;
+
+  // Step Lock: If a Category poll vote arrived but user is NOT at Category step, ignore the expired vote!
+  if (isCategoryPollVote && !isAtCategoryStep) {
+    console.log(`[FlowController] Ignoring expired Category poll vote "${cleanText}" at step ${state.current_step} (Category already locked to ${state.category})`);
+    return { handled: true };
+  }
+
+  const isGiftingGemstonesVote =
+    isAtCategoryStep && (
+      lower.includes("gifting gemstone") ||
+      lower === "💎 gifting gemstones" ||
+      lower.includes("gemstone") ||
+      lower.includes("මැණික්") ||
+      (currentCategoryPollOptions[0] && lower === "1" && currentCategoryPollOptions[0].toLowerCase().includes("gemstone"))
+    );
 
   const isSilverJewelryVote =
-    lower.includes("silver jewelry") ||
-    lower.includes("rings & pendants") ||
-    lower === "💍 silver jewelry (rings & pendants)" ||
-    (state.category === "Gifting Gemstone" &&
-      state.current_step !== "GEM_SIZE_SELECT" &&
-      !lower.startsWith("🔹") &&
-      (lower.includes("silver jewelry") || lower.includes("silver ring") || lower.includes("silver pendant") || lower.includes("රිදී ආභරණ") || lower === "jewelry" || lower === "jewellery")) ||
-    (state.current_step === "CATEGORY_SELECT" && (lower.includes("jewelry") || lower.includes("silver") || lower.includes("රිදී") || lower.includes("ring") || lower.includes("pendant") || (currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) !== -1 && lower === String(currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) + 1))));
+    isAtCategoryStep
+      ? (
+          lower.includes("silver jewelry") ||
+          lower.includes("rings & pendants") ||
+          lower === "💍 silver jewelry (rings & pendants)" ||
+          lower.includes("jewelry") ||
+          lower.includes("silver") ||
+          lower.includes("රිදී") ||
+          lower.includes("ring") ||
+          lower.includes("pendant") ||
+          (currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) !== -1 && lower === String(currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("jewelry") || o.toLowerCase().includes("silver")) + 1))
+        )
+      : (
+          // When NOT at category step, ONLY allow switching if customer explicitly typed a full clear sentence requesting jewelry
+          // AND it is NOT a poll vote!
+          !isPollVote &&
+          !lower.startsWith("🔹") &&
+          (lower === "silver jewelry" || lower === "jewelry" || lower === "jewellery" || lower === "රිදී ආභරණ" || lower.includes("change to jewelry") || lower.includes("switch to jewelry"))
+        );
 
   const isGiftPackagingVote =
-    lower.includes("gift packaging") ||
-    lower.includes("packaging & cards") ||
-    lower === "🎁 gift packaging & cards" ||
-    (state.current_step === "CATEGORY_SELECT" && (lower.includes("packaging") || lower.includes("box") || lower.includes("card") || (currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("packaging")) !== -1 && lower === String(currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("packaging")) + 1))));
+    isAtCategoryStep && (
+      lower.includes("gift packaging") ||
+      lower.includes("packaging & cards") ||
+      lower === "🎁 gift packaging & cards" ||
+      lower.includes("packaging") ||
+      lower.includes("box") ||
+      lower.includes("card") ||
+      (currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("packaging")) !== -1 && lower === String(currentCategoryPollOptions.findIndex(o => o.toLowerCase().includes("packaging")) + 1))
+    );
 
   if (isGiftingGemstonesVote && flowConfig.categories?.gemstones?.enabled !== false) {
     state = {
@@ -1065,17 +1128,34 @@ export async function handleQualificationFlow(
   // --------------------------------------------------------------------------
   // GLOBAL JEWELRY TYPE SWITCH GUARD (One-touch poll reaction inside Silver Jewelry)
   // --------------------------------------------------------------------------
-  const isRingTypeVote =
+  const isJewelryTypePollVote =
+    lower === "1️⃣ solid 925 silver ring" ||
     lower.includes("solid 925 silver ring") ||
-    (state.category === "Silver Jewelry" && state.current_step === "JEWELRY_TYPE_SELECT" && (lower.includes("ring") || lower.includes("මුද්ද") || lower === "1"));
+    lower === "2️⃣ solid 925 silver pendant" ||
+    lower.includes("solid 925 silver pendant") ||
+    lower === "3️⃣ custom design piece" ||
+    lower.includes("custom design piece");
+
+  const isAtJewelryTypeStep =
+    state.category === "Silver Jewelry" &&
+    state.current_step === "JEWELRY_TYPE_SELECT";
+
+  if (isJewelryTypePollVote && !isAtJewelryTypeStep) {
+    console.log(`[FlowController] Ignoring expired Jewelry Type poll vote "${cleanText}" at step ${state.current_step}`);
+    return { handled: true };
+  }
+
+  const isRingTypeVote =
+    isAtJewelryTypeStep &&
+    (lower.includes("solid 925 silver ring") || lower.includes("ring") || lower.includes("මුද්ද") || lower === "1");
 
   const isPendantTypeVote =
-    lower.includes("solid 925 silver pendant") ||
-    (state.category === "Silver Jewelry" && state.current_step === "JEWELRY_TYPE_SELECT" && (lower.includes("pendant") || lower.includes("පෙන්ඩන්ට්") || lower === "2"));
+    isAtJewelryTypeStep &&
+    (lower.includes("solid 925 silver pendant") || lower.includes("pendant") || lower.includes("පෙන්ඩන්ට්") || lower === "2");
 
   const isCustomDesignTypeVote =
-    lower.includes("custom design piece") ||
-    (state.category === "Silver Jewelry" && state.current_step === "JEWELRY_TYPE_SELECT" && (lower.includes("custom") || lower.includes("bespoke") || lower.includes("design") || lower.includes("විශේෂ") || lower === "3"));
+    isAtJewelryTypeStep &&
+    (lower.includes("custom design piece") || lower.includes("custom") || lower.includes("bespoke") || lower.includes("design") || lower.includes("විශේෂ") || lower === "3");
 
   if (isRingTypeVote) {
     state.category = "Silver Jewelry";
@@ -2123,6 +2203,9 @@ async function saveFlowState(
   flowState: LeadFlowState
 ) {
   try {
+    // Stamp the time of this state update / vote to enable rapid duplicate debounce
+    flowState.last_voted_at = new Date().toISOString();
+
     const isQualified =
       flowState.current_step === "HANDED_OFF" ||
       flowState.current_step === "QUALIFIED_COMPLETE";

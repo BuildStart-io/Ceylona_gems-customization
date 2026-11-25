@@ -318,6 +318,12 @@ async function processMessage(
     const replyImageUrls = flowResult.imageUrls || [];
     const pollToSend = flowResult.poll || null;
 
+    // If handled silently (e.g. debounced rapid poll vote or empty vote payload), exit without sending outbound
+    if (!replyMessage && !pollToSend && replyImageUrls.length === 0) {
+      console.log(`[${corrId}] Flow handled silently (debounced/dropped vote), no outbound reply needed.`);
+      return;
+    }
+
     // Store outgoing message in conversation history
     mark("store_outbound_start");
     await supabase.from("conversations").insert({
