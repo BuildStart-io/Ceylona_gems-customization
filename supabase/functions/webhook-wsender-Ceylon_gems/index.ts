@@ -78,14 +78,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, skipped: "fromMe_vote" }), { headers: jsonHeaders });
     }
 
-    const fromJid = String(
-      wp?.from ||
-      voteObj.from ||
-      pollObj.to ||
-      wp?.chatId ||
-      wp?._data?.key?.remoteJid ||
-      ""
-    );
+    const fromJid = wp?.fromMe === true
+      ? String(
+          wp?.to ||
+          wp?.chatId ||
+          wp?._data?.key?.remoteJid ||
+          ""
+        )
+      : String(
+          wp?.from ||
+          voteObj.from ||
+          pollObj.to ||
+          wp?.chatId ||
+          wp?._data?.key?.remoteJid ||
+          ""
+        );
     if (/@g\.us$/i.test(fromJid) || /@broadcast$/i.test(fromJid) || /@newsletter$/i.test(fromJid)) {
       return new Response(JSON.stringify({ ok: true, skipped: "non_individual" }), { headers: jsonHeaders });
     }

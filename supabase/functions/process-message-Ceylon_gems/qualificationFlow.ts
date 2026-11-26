@@ -373,13 +373,19 @@ export interface ChatFlowConfig {
 
 export const DEFAULT_FLOW_STEPS: Record<string, FlowStepConfig> = {
   greeting: {
-    main_text: "ආයුබෝවන්! 💎 Ceylona Gems & Jewelry වෙත සාදරයෙන් පිළිගන්නවා. අපි ඔයාට ලස්සනම gift එකක් තෝරගන්න උදව් කරන්නම්. ✨\n\nඔයා බලන්න කැමති මොන gift option එකද? පහළින් තෝරන්නකෝ 👇",
+    main_text: "ආයුබෝවන්! 💎 Ceylona Gems & Jewelry වෙත සාදරයෙන් පිළිගන්නවා. අපේ සුවිශේෂී Seasonal Offer එක මේ දිනවල ක්‍රියාත්මකයි! 🎁 (මේ Offer එක ලබාගත හැක්කේ අපේ Sales Agent හරහා පමණි ✨)\n\nඔයා බලන්න කැමති මොන gift option එකද? පහළින් තෝරන්නකෝ 👇",
   },
   gem_budget: {
     main_text: "නියමයි! 💎 අපේ හැම gemstone එකකටම රජයේ ලියාපදිංචි Gem Lab Certificate එකක් ඇතුළත් කරලා තියෙන්නේ (LKR 1,500ක සහතිකයක් මිලටම ඇතුළත්). ✨\n\nඔයා බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
   },
   gem_color: {
-    main_text: "Budget එක සටහන් කරගත්තා! 💰💎\nඔබ විශේෂයෙන් සොයන Gemstone වර්ගයක් හෝ පාටක් (Color) තියෙනවද? (උදා: Blue Sapphire, Amethyst, Emerald, Aquamarine, etc.)\nනැත්නම් 'ඕනෑම පාටක්' කියලා කියන්නත් පුළුවන් ✨",
+    main_text: "Budget එක සටහන් කරගත්තා! 💰💎\n🌟 500+ Orders Completed | රජයේ ලියාපදිංචි මැණික් ව්‍යාපාරිකයෙක් (Govt Registered Gem Dealer) 💎\n\nඔබ කැමති Gemstone Color එක පහළින් තෝරන්නකෝ 👇",
+  },
+  gem_reason: {
+    main_text: "හොඳයි! 💎 මේ gift එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) හෝ විශේෂ හේතුවක් තියෙනවද? 🎁\n(අපේ Sales Specialist ට හොඳම recommendations ලබාදෙන්න මේ විස්තර උදව් වේවි ✨)\n\nකැමති නම් කෙටි විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න 👇",
+  },
+  gem_authenticity: {
+    main_text: "🔍 ඔබ තෝරාගන්නා සෑම Gemstone එකක් සඳහාම ලබාදෙන Gem Lab Certificate එකෙහි QR code එක හෝ Certificate Number එක මඟින් Online සත්‍යාපනය (Verify Authenticity) කරගත හැක! ✨",
   },
   gem_size: {
     main_text: "නියමයි! 💎 ඔයා බලාපොරොත්තු වෙන Gemstone Size එක පහළින් තෝරන්නකෝ 👇",
@@ -391,13 +397,16 @@ export const DEFAULT_FLOW_STEPS: Record<string, FlowStepConfig> = {
     main_text: "හරිම ලස්සන තේරීමක්! 💍✨ අපේ Silver Jewelry collection එක Solid 925 Silver වලින් master craftsmanship එකෙන් නිර්මාණය කරන්නේ (Handcrafted Silver pieces start from LKR 10,000+).\n\nඔයා කැමති jewelry වර්ගය පහළින් තෝරන්නකෝ 👇",
   },
   ring_size: {
-    main_text: "Solid 925 Silver Rings! 💍✨ ඔයාගෙ Ring Size එක දන්නවද? (උදා: US 6, 7, 8 හෝ 'දන්නේ නෑ' කියලා කියන්න පුළුවන්) ✨",
-  },
-  jewelry_color: {
-    main_text: "නියමයි! 💍 Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Emerald, Amethyst, etc.)",
+    main_text: "Solid 925 Silver Rings! 💍✨ ඔයාගෙ Ring Size එක දන්නවද? (උදා: US 6, 7, 8 හෝ 'දන්නේ නෑ' කියලා කියන්න පුළුවන්, අපේ standard rings adjustable වේ) ✨",
   },
   jewelry_budget: {
-    main_text: "Silver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+    main_text: "නියමයි! 💍 අපේ හැම silver jewelry piece එකක් සඳහාම 925 Hallmark සහ Gem Lab Certificate සහතිකයක් ඇතුළත් වේ. ✨\n\nSilver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+  },
+  jewelry_color: {
+    main_text: "Budget එක සටහන් කරගත්තා! 💰💍\n🌟 500+ Orders Completed | රජයේ ලියාපදිංචි මැණික් ව්‍යාපාරිකයෙක් (Govt Registered Gem Dealer) 💎\n\nJewelry එකට ඔබ කැමති Gemstone Color එක පහළින් තෝරන්නකෝ 👇",
+  },
+  jewelry_reason: {
+    main_text: "හොඳයි! 💍 මේ jewelry එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) හෝ විශේෂ හේතුවක් තියෙනවද? 🎁\n(අපේ Sales Specialist ට හොඳම recommendations ලබාදෙන්න මේ විස්තර උදව් වේවි ✨)\n\nකැමති නම් කෙටි විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න 👇",
   },
   jewelry_recipient_date: {
     main_text: "හොඳයි! 💍 මේ gift එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) සහ මේක ඔබට කවදා වන විටද අවශ්‍ය වෙන්නේ? 🎁📅",
@@ -411,6 +420,12 @@ export const DEFAULT_FLOW_STEPS: Record<string, FlowStepConfig> = {
   custom_design: {
     main_text: "Custom Goldsmithing & Bespoke Design! 💎 අපේ master jeweler ඔබ කැමති ඕනෑම design එකක් Solid 925 Silver වලින් සකස් කරලා දෙන්න සූදානම්. ඔයා ළඟ තියෙන photo එකක් හෝ reference design එකක් මේ chat එකට එවන්න පුළුවන්ද? අපේ designer කෙනෙක් ඉක්මනින්ම සම්බන්ධ වෙයි! ✨",
   },
+  decision_fork: {
+    main_text: "ඔබ කැමති option එක පහළින් තෝරන්න: 👇",
+  },
+  photo_preview_confirm: {
+    main_text: "මේ විස්තර සහ Photos බලලා ඔබ තෘප්තිමත්ද? අපේ Sales Specialist කෙනෙක් සමඟ Order එක confirm කරගැනීමට පහළින් තෝරන්න: 👇",
+  },
   confirmation: {
     main_text: "මේ විස්තර ඔක්කොම හරිද? Order එක confirm කරලා proceed කරන්නද? ✨",
   },
@@ -422,13 +437,66 @@ export const DEFAULT_FLOW_STEPS: Record<string, FlowStepConfig> = {
   },
 };
 
+export const GEM_COLOR_POLL_OPTIONS = [
+  "1️⃣ Red (රතු)",
+  "2️⃣ Yellow (කහ)",
+  "3️⃣ Light Blue (ලා නිල්)",
+  "4️⃣ Dark Blue (තද නිල්)",
+  "5️⃣ White (සුදු)",
+  "6️⃣ Purple (දම්)",
+  "7️⃣ Birthstone (උපන් නැකත්)",
+  "8️⃣ Different (වෙනත් පාටක්)",
+];
+
+export function parseColorChoice(text: string): { label: string; gemstoneType: string } {
+  const lower = (text || "").toLowerCase().trim();
+  if (lower.includes("1") || lower.includes("red") || lower.includes("රතු") || lower.includes("garnet") || lower.includes("ruby")) {
+    return { label: "Red", gemstoneType: "Red Garnet / Ruby" };
+  }
+  if (lower.includes("2") || lower.includes("yellow") || lower.includes("කහ") || lower.includes("citrine")) {
+    return { label: "Yellow", gemstoneType: "Yellow Citrine / Sapphire" };
+  }
+  if (lower.includes("3") || lower.includes("light blue") || lower.includes("ලා නිල්") || lower.includes("aquamarine") || lower.includes("swiss blue")) {
+    return { label: "Light Blue", gemstoneType: "Light Blue Aquamarine / Topaz" };
+  }
+  if (lower.includes("4") || lower.includes("dark blue") || lower.includes("තද නිල්") || lower.includes("blue sapphire") || lower.includes("london blue")) {
+    return { label: "Dark Blue", gemstoneType: "Dark Blue Sapphire / Topaz" };
+  }
+  if (lower.includes("5") || lower.includes("white") || lower.includes("සුදු") || lower.includes("pearl") || lower.includes("moonstone") || lower.includes("clear")) {
+    return { label: "White", gemstoneType: "White Pearl / Topaz" };
+  }
+  if (lower.includes("6") || lower.includes("purple") || lower.includes("දම්") || lower.includes("amethyst")) {
+    return { label: "Purple", gemstoneType: "Purple Amethyst" };
+  }
+  if (lower.includes("7") || lower.includes("birthstone") || lower.includes("නැකත්")) {
+    return { label: "Birthstone", gemstoneType: "Personalized Birthstone Gem" };
+  }
+  if (lower.includes("8") || lower.includes("different") || lower.includes("වෙනත්") || lower.includes("other")) {
+    return { label: "Special / Different Color", gemstoneType: "Special Custom Gemstone" };
+  }
+  return { label: text, gemstoneType: text };
+}
+
+export function getColorSearchKeywords(color: string): string[] {
+  const lower = (color || "").toLowerCase().trim();
+  if (lower.includes("red") || lower.includes("රතු")) return ["red", "garnet", "ruby", "spinel"];
+  if (lower.includes("yellow") || lower.includes("කහ")) return ["yellow", "citrine"];
+  if (lower.includes("light blue") || lower.includes("ලා නිල්")) return ["light blue", "swiss blue", "aquamarine", "topaz", "sky blue"];
+  if (lower.includes("dark blue") || lower.includes("තද නිල්")) return ["dark blue", "blue sapphire", "london blue", "sapphire", "blue"];
+  if (lower.includes("blue") || lower.includes("නිල්")) return ["blue", "sapphire", "topaz", "aquamarine"];
+  if (lower.includes("white") || lower.includes("සුදු")) return ["white", "pearl", "topaz", "moonstone"];
+  if (lower.includes("purple") || lower.includes("දම්")) return ["purple", "amethyst"];
+  if (lower.includes("birthstone") || lower.includes("නැකත්")) return ["garnet", "amethyst", "aquamarine", "topaz", "sapphire", "citrine", "pearl"];
+  return [lower];
+}
+
 export const DEFAULT_FLOW_CONFIG: ChatFlowConfig = {
   categories: {
     gemstones: {
       enabled: true,
       label: "💎 Gifting Gemstones",
       budget_tiers: [
-        { label: "🔹 LKR 4,000 – 10,000", min: 4000, max: 10000 },
+        { label: "🔹 LKR 4,400 – 10,000", min: 4400, max: 10000 },
         { label: "🔹 LKR 10,000 – 20,000", min: 10000, max: 20000 },
         { label: "🔹 Above LKR 20,000", min: 20000, max: 100000 },
       ],
@@ -863,6 +931,13 @@ export async function handleQualificationFlow(
     lower.startsWith("1️⃣") ||
     lower.startsWith("2️⃣") ||
     lower.startsWith("3️⃣") ||
+    lower.startsWith("4️⃣") ||
+    lower.startsWith("5️⃣") ||
+    lower.startsWith("6️⃣") ||
+    lower.startsWith("7️⃣") ||
+    lower.startsWith("8️⃣") ||
+    lower.startsWith("👤") ||
+    lower.startsWith("📸") ||
     lower.startsWith("✅") ||
     lower.startsWith("🔄");
 
@@ -875,7 +950,7 @@ export async function handleQualificationFlow(
   }
 
   // Check if explicit reset/restart is requested (e.g. "start", "reset", "begin", "menu", "මුල සිට")
-  const isExplicitReset = /^(start|begin|restart|reset|menu|main menu|home|options|මුල සිට|අලුත්|ආපසු|new order|new gift|මෙනු|மீண்டும்|ஆரம்பம்)$/i.test(lower);
+  const isExplicitReset = /^(start|begin|restart|reset|resume|bot resume|menu|main menu|home|options|මුල සිට|අලුත්|ආපසු|new order|new gift|මෙනු|மீண்டும்|ஆரம்பம்)$/i.test(lower);
   // General greetings reset to START if lead is NOT already qualified or if manual takeover was released
   const isGreeting = /^(hi|hello|hey|hlw|hlo|halo|gm|gn|good morning|good evening|ආයුබෝවන්|සාදරයෙන්|வணக்கம்|ஹலோ)$/i.test(lower);
 
@@ -1269,75 +1344,129 @@ export async function handleQualificationFlow(
     return {
       handled: true,
       replyText: getStepMessage(flowConfig, "gem_color"),
+      poll: {
+        name: "🎨 ඔබ කැමති Gemstone Color එක තෝරන්න:",
+        options: GEM_COLOR_POLL_OPTIONS,
+        multipleAnswers: false,
+      },
     };
   }
 
   if (state.current_step === "GEM_COLOR_SELECT") {
-    if (!isGenericFiller(cleanText)) {
-      state.color = cleanText;
-      state.gemstone_type = cleanText;
-    }
-    state.current_step = "GEM_SIZE_SELECT";
+    const chosen = parseColorChoice(cleanText);
+    state.color = chosen.label;
+    state.gemstone_type = chosen.gemstoneType;
+
+    state.current_step = "GEM_REASON_SELECT";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
-    // Future-proof dynamic catalog check:
-    const colorLower = cleanText.toLowerCase().trim();
-    let colorNote = "";
-
-    const isAnyOrGeneric = colorLower === "any" || colorLower === "all" || colorLower === "kisi" || colorLower === "ona ekak" || colorLower === "ona" || isGenericFiller(cleanText) || cleanText.includes("?") || cleanText.length < 2;
-
-    if (!isAnyOrGeneric) {
-      try {
-        const { data: dbProducts } = await supabase
-          .from("products")
-          .select("name, description")
-          .eq("user_id", userId)
-          .eq("is_active", true);
-
-        const gemPool = (dbProducts || []).filter((p: any) => {
-          const n = (p.name || "").toLowerCase();
-          return !n.includes("box") && !n.includes("card") && !n.includes("hamper") && !n.includes("packaging");
-        });
-
-        // Common color keywords that map to real gemstones
-        const genericColors = [
-          "blue", "pink", "yellow", "red", "green", "purple", "white", "ocean",
-          "නිල්", "රතු", "කහ", "රෝස", "දම්", "පච්ච", "කොළ", "සුදු"
-        ];
-
-        const matchesProduct = gemPool.some((p: any) => {
-          const pName = (p.name || "").toLowerCase();
-          const pDesc = (p.description || "").toLowerCase();
-          return pName.includes(colorLower) || colorLower.includes(pName) || pDesc.includes(colorLower);
-        });
-
-        const matchesGenericColor = genericColors.some((c) => colorLower.includes(c));
-
-        if (!matchesProduct && !matchesGenericColor) {
-          // Customer asked for something not in the store's active catalog (e.g. Diamond, Ruby, or unlisted item)
-          const topGems = Array.from(new Set(gemPool.map((p: any) => p.name)))
-            .slice(0, 3)
-            .join(", ");
-
-          if (topGems) {
-            colorNote = `(${cleanText} natural gems stock එකේ නැති වුණත්, අපේ popular ${topGems} වලින් gemstone එකක් තෝරගන්න පුළුවන් ✨)\n\n`;
-          }
-        }
-      } catch (err) {
-        console.warn("[GEM_COLOR_SELECT] Dynamic catalog check failed, continuing safely:", err);
-      }
-    }
-
-    const sizePrompt = getStepMessage(flowConfig, "gem_size");
     return {
       handled: true,
-      replyText: colorNote ? `${colorNote}${sizePrompt}` : sizePrompt,
+      replyText: getStepMessage(flowConfig, "gem_reason"),
       poll: {
-        name: "📏 Gemstone එකේ Size එක තෝරන්න:",
+        name: "✨ කැමති නම් විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න:",
         options: [
-          "🔹 Small Size (Small Gift)",
-          "🔹 Medium Size (Ideal Gift or Ring)",
-          "🔹 Large Size (Gift / Pendant)",
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed to Agent)",
+          "📸 විස්තර සහ Photos බලන්න (View Details & Photos)",
+        ],
+        multipleAnswers: false,
+      },
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // STEP: GEM_REASON_SELECT (Purchase Reason with Skip / Decision Fork Option)
+  // --------------------------------------------------------------------------
+  if (state.current_step === "GEM_REASON_SELECT") {
+    const isDirectAgent =
+      lower.includes("sales agent") ||
+      lower.includes("agent") ||
+      lower.includes("proceed") ||
+      lower === "1";
+
+    const isViewPhotos =
+      lower.includes("photo") ||
+      lower.includes("විස්තර") ||
+      lower.includes("details") ||
+      lower.includes("view") ||
+      lower === "2";
+
+    if (isDirectAgent) {
+      return await handoffToSalesAgent(
+        supabase,
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        phoneNumber,
+        senderName,
+        state,
+        flowConfig,
+        sessionApiKey
+      );
+    }
+
+    if (isViewPhotos) {
+      const recommended = await fetchConfiguredRecommendations(
+        supabase,
+        userId,
+        "Gifting Gemstone",
+        state.budget_min || 4400,
+        state.budget_max || 20000,
+        state.color || ""
+      );
+
+      const prod = recommended[0] || {
+        name: `${state.color || "Ceylon"} Gemstone`,
+        price: state.budget_min || 4400,
+        images: [],
+      };
+
+      state.selected_product = prod;
+      state.recommended_products = recommended;
+      state.current_step = "PHOTO_PREVIEW_CONFIRM";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+      const prodName = prod.name || "Natural Ceylon Gemstone";
+      const prodPrice = prod.price ? `LKR ${Number(prod.price).toLocaleString()}` : "Price upon request";
+      const authMsg = getStepMessage(flowConfig, "gem_authenticity");
+      const confirmPrompt = getStepMessage(flowConfig, "photo_preview_confirm");
+
+      const previewText = `✨ ඔබ තෝරාගත් ${state.color || ""} Gemstone එකෙහි සාම්පල විස්තර (Sample Details):\n\n💎 *${prodName}*\n💰 Starting Price: ${prodPrice}\n\n${authMsg}\n\n${confirmPrompt}`;
+
+      const imgUrls = (prod.images && prod.images.length > 0) ? [prod.images[0]] : [];
+
+      return {
+        handled: true,
+        replyText: previewText,
+        imageUrls: imgUrls,
+        poll: {
+          name: "✨ ඔබ කැමති option එක තෝරන්න:",
+          options: [
+            "👤 Sales Agent සමඟ Order එක Proceed කරන්න (Confirm with Agent)",
+            "🔄 වෙනත් එකක් තෝරන්න (Change / Pick Another)",
+          ],
+          multipleAnswers: false,
+        },
+      };
+    }
+
+    // Customer typed text as the reason / occasion!
+    if (!isGenericFiller(cleanText)) {
+      state.gift_recipient = cleanText;
+      state.custom_request = cleanText;
+    }
+
+    state.current_step = "DECISION_FORK";
+    await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+    return {
+      handled: true,
+      replyText: "ස්තූතියි! 🎁 ඔබගේ විස්තර සටහන් කරගත්තා. අපේ Specialist ට හොඳම gemstones තෝරාදීමට මේ විස්තර බෙහෙවින් උපකාරී වේවි. ✨\n\nඔබ කැමති option එක පහළින් තෝරන්නකෝ 👇",
+      poll: {
+        name: "✨ ඔබ කැමති option එක තෝරන්න:",
+        options: [
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed to Agent)",
+          "📸 විස්තර සහ Photos බලන්න (View Details & Photos)",
         ],
         multipleAnswers: false,
       },
@@ -1588,43 +1717,282 @@ export async function handleQualificationFlow(
     return {
       handled: true,
       replyText: getStepMessage(flowConfig, "jewelry_color"),
+      poll: {
+        name: "🎨 Jewelry Gemstone Color එක තෝරන්න:",
+        options: GEM_COLOR_POLL_OPTIONS,
+        multipleAnswers: false,
+      },
     };
   }
 
   if (state.current_step === "JEWELRY_COLOR_SELECT") {
-    if (!isGenericFiller(cleanText)) {
-      state.color = cleanText;
-      state.gemstone_type = cleanText;
+    const chosen = parseColorChoice(cleanText);
+    state.color = chosen.label;
+    state.gemstone_type = chosen.gemstoneType;
+
+    state.current_step = "JEWELRY_REASON_SELECT";
+    await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+    return {
+      handled: true,
+      replyText: getStepMessage(flowConfig, "jewelry_reason"),
+      poll: {
+        name: "✨ කැමති නම් විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න:",
+        options: [
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed to Agent)",
+          "📸 විස්තර සහ Photos බලන්න (View Details & Photos)",
+        ],
+        multipleAnswers: false,
+      },
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // STEP: JEWELRY_REASON_SELECT (Purchase Reason with Skip / Decision Fork Option)
+  // --------------------------------------------------------------------------
+  if (state.current_step === "JEWELRY_REASON_SELECT") {
+    const isDirectAgent =
+      lower.includes("sales agent") ||
+      lower.includes("agent") ||
+      lower.includes("proceed") ||
+      lower === "1";
+
+    const isViewPhotos =
+      lower.includes("photo") ||
+      lower.includes("විස්තර") ||
+      lower.includes("details") ||
+      lower.includes("view") ||
+      lower === "2";
+
+    if (isDirectAgent) {
+      return await handoffToSalesAgent(
+        supabase,
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        phoneNumber,
+        senderName,
+        state,
+        flowConfig,
+        sessionApiKey
+      );
     }
 
-    const isPendant = (state.jewelry_type || "").toLowerCase().includes("pendant");
-    if (isPendant) {
-      state.current_step = "GEM_SIZE_SELECT";
+    if (isViewPhotos) {
+      const recommended = await fetchConfiguredRecommendations(
+        supabase,
+        userId,
+        "Silver Jewelry",
+        state.budget_min || 10000,
+        state.budget_max || 35000,
+        state.color || ""
+      );
+
+      const prod = recommended[0] || {
+        name: `${state.color || "Ceylon"} Silver Jewelry`,
+        price: state.budget_min || 10000,
+        images: [],
+      };
+
+      state.selected_product = prod;
+      state.recommended_products = recommended;
+      state.current_step = "PHOTO_PREVIEW_CONFIRM";
       await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
-      const sizePrompt = getStepMessage(flowConfig, "gem_size");
+      const prodName = prod.name || "Solid 925 Silver Piece";
+      const prodPrice = prod.price ? `LKR ${Number(prod.price).toLocaleString()}` : "Price upon request";
+      const silverCost = flowConfig.categories?.jewelry?.silver_setting_cost || 5000;
+      const disclaimer = getStepMessage(flowConfig, "silver_disclaimer", { cost: silverCost });
+      const authMsg = getStepMessage(flowConfig, "gem_authenticity");
+      const confirmPrompt = getStepMessage(flowConfig, "photo_preview_confirm");
+
+      const previewText = `✨ ඔබ තෝරාගත් ${state.color || ""} Silver Jewelry සාම්පල විස්තර (Sample Details):\n\n💍 *${prodName}*\n💰 Gemstone Starting Price: ${prodPrice}\n\n${disclaimer}\n\n${authMsg}\n\n${confirmPrompt}`;
+
+      const imgUrls = (prod.images && prod.images.length > 0) ? [prod.images[0]] : [];
+
       return {
         handled: true,
-        replyText: sizePrompt,
+        replyText: previewText,
+        imageUrls: imgUrls,
         poll: {
-          name: "📏 Pendant Gemstone එකේ Size එක තෝරන්න:",
+          name: "✨ ඔබ කැමති option එක තෝරන්න:",
           options: [
-            "🔹 Small Size (Small Gift)",
-            "🔹 Medium Size (Ideal Gift or Ring)",
-            "🔹 Large Size (Gift / Pendant)",
+            "👤 Sales Agent සමඟ Order එක Proceed කරන්න (Confirm with Agent)",
+            "🔄 වෙනත් එකක් තෝරන්න (Change / Pick Another)",
           ],
           multipleAnswers: false,
         },
       };
     }
 
-    state.current_step = "JEWELRY_RECIPIENT_AND_DATE";
+    // Customer typed text as the reason
+    if (!isGenericFiller(cleanText)) {
+      state.gift_recipient = cleanText;
+      state.custom_request = cleanText;
+    }
+
+    state.current_step = "DECISION_FORK";
     await saveFlowState(supabase, userId, phoneNumber, senderName, state);
 
     return {
       handled: true,
-      replyText: getStepMessage(flowConfig, "jewelry_recipient_date"),
+      replyText: "ස්තූතියි! 💍 ඔබගේ විස්තර සටහන් කරගත්තා. අපේ Specialist ට හොඳම jewelry designs තෝරාදීමට මේ විස්තර බෙහෙවින් උපකාරී වේවි. ✨\n\nඔබ කැමති option එක පහළින් තෝරන්නකෝ 👇",
+      poll: {
+        name: "✨ ඔබ කැමති option එක තෝරන්න:",
+        options: [
+          "👤 Sales Agent සම්බන්ධ කරන්න (Proceed to Agent)",
+          "📸 විස්තර සහ Photos බලන්න (View Details & Photos)",
+        ],
+        multipleAnswers: false,
+      },
     };
+  }
+
+  // --------------------------------------------------------------------------
+  // COMMON STEP: DECISION_FORK (After Reason Text Input)
+  // --------------------------------------------------------------------------
+  if (state.current_step === "DECISION_FORK") {
+    const isDirectAgent =
+      lower.includes("sales agent") ||
+      lower.includes("agent") ||
+      lower.includes("proceed") ||
+      lower === "1";
+
+    const isViewPhotos =
+      lower.includes("photo") ||
+      lower.includes("විස්තර") ||
+      lower.includes("details") ||
+      lower.includes("view") ||
+      lower === "2";
+
+    if (isDirectAgent) {
+      return await handoffToSalesAgent(
+        supabase,
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        phoneNumber,
+        senderName,
+        state,
+        flowConfig,
+        sessionApiKey
+      );
+    }
+
+    if (isViewPhotos) {
+      const isJewelry = state.category === "Silver Jewelry" || !!state.jewelry_type;
+      const recommended = await fetchConfiguredRecommendations(
+        supabase,
+        userId,
+        isJewelry ? "Silver Jewelry" : "Gifting Gemstone",
+        state.budget_min || (isJewelry ? 10000 : 4400),
+        state.budget_max || (isJewelry ? 35000 : 20000),
+        state.color || ""
+      );
+
+      const prod = recommended[0] || {
+        name: `${state.color || "Ceylon"} Gemstone`,
+        price: state.budget_min || (isJewelry ? 10000 : 4400),
+        images: [],
+      };
+
+      state.selected_product = prod;
+      state.recommended_products = recommended;
+      state.current_step = "PHOTO_PREVIEW_CONFIRM";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+      const prodName = prod.name || (isJewelry ? "Solid 925 Silver Piece" : "Natural Ceylon Gemstone");
+      const prodPrice = prod.price ? `LKR ${Number(prod.price).toLocaleString()}` : "Price upon request";
+      const silverCost = flowConfig.categories?.jewelry?.silver_setting_cost || 5000;
+      const disclaimer = isJewelry
+        ? `\n\n${getStepMessage(flowConfig, "silver_disclaimer", { cost: silverCost })}`
+        : "";
+      const authMsg = getStepMessage(flowConfig, "gem_authenticity");
+      const confirmPrompt = getStepMessage(flowConfig, "photo_preview_confirm");
+
+      const previewText = `✨ ඔබ තෝරාගත් ${state.color || ""} ${isJewelry ? "Jewelry" : "Gemstone"} සාම්පල විස්තර (Sample Details):\n\n${isJewelry ? "💍" : "💎"} *${prodName}*\n💰 Starting Price: ${prodPrice}${disclaimer}\n\n${authMsg}\n\n${confirmPrompt}`;
+
+      const imgUrls = (prod.images && prod.images.length > 0) ? [prod.images[0]] : [];
+
+      return {
+        handled: true,
+        replyText: previewText,
+        imageUrls: imgUrls,
+        poll: {
+          name: "✨ ඔබ කැමති option එක තෝරන්න:",
+          options: [
+            "👤 Sales Agent සමඟ Order එක Proceed කරන්න (Confirm with Agent)",
+            "🔄 වෙනත් එකක් තෝරන්න (Change / Pick Another)",
+          ],
+          multipleAnswers: false,
+        },
+      };
+    }
+
+    if (/^(yes|ow|ඔව්|hari|හරි|ok|okay)$/i.test(cleanText.trim())) {
+      return await handoffToSalesAgent(
+        supabase,
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        phoneNumber,
+        senderName,
+        state,
+        flowConfig,
+        sessionApiKey
+      );
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // COMMON STEP: PHOTO_PREVIEW_CONFIRM
+  // --------------------------------------------------------------------------
+  if (state.current_step === "PHOTO_PREVIEW_CONFIRM") {
+    const isConfirmChoice =
+      lower.includes("sales agent") ||
+      lower.includes("agent") ||
+      lower.includes("proceed") ||
+      lower.includes("confirm") ||
+      lower === "1" ||
+      /^(yes|ow|ඔව්|hari|හරි|ok|okay)$/i.test(cleanText.trim());
+
+    if (isConfirmChoice) {
+      return await handoffToSalesAgent(
+        supabase,
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        phoneNumber,
+        senderName,
+        state,
+        flowConfig,
+        sessionApiKey
+      );
+    }
+
+    const isChangeChoice =
+      lower.includes("change") ||
+      lower.includes("reset") ||
+      lower.includes("වෙනත්") ||
+      lower.includes("වෙනස්") ||
+      lower.includes("restart") ||
+      lower === "2" ||
+      lower.includes("මුල සිට");
+
+    if (isChangeChoice) {
+      state.current_step = "CATEGORY_SELECT";
+      await saveFlowState(supabase, userId, phoneNumber, senderName, state);
+
+      return {
+        handled: true,
+        replyText: getStepMessage(flowConfig, "restart_flow"),
+        poll: {
+          name: "🎁 ඔබ සොයන Gift Option එක තෝරන්න:",
+          options: getCategoryPollOptions(flowConfig),
+          multipleAnswers: false,
+        },
+      };
+    }
   }
 
   if (state.current_step === "JEWELRY_RECIPIENT_AND_DATE") {
@@ -2043,10 +2411,32 @@ function isStepMatchingInput(step: string, text: string): boolean {
       return lower.includes("gemstone") || lower.includes("jewelry") || lower.includes("pack") || lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("gifting") || lower.includes("silver");
     case "GEM_BUDGET_SELECT":
     case "JEWELRY_BUDGET_SELECT":
-      return lower.includes("4,000") || lower.includes("4000") || lower.includes("10,000") || lower.includes("10000") || lower.includes("20,000") || lower.includes("20000") || lower.includes("35,000") || lower.includes("above") || lower.includes("වැඩි") || lower.includes("1") || lower.includes("2") || lower.includes("3");
+      return lower.includes("4,000") || lower.includes("4000") || lower.includes("4,400") || lower.includes("4400") || lower.includes("10,000") || lower.includes("10000") || lower.includes("20,000") || lower.includes("20000") || lower.includes("35,000") || lower.includes("above") || lower.includes("වැඩි") || lower.includes("1") || lower.includes("2") || lower.includes("3");
     case "GEM_COLOR_SELECT":
     case "JEWELRY_COLOR_SELECT":
-      return !text.includes("?") && !lower.includes("delivery") && !lower.includes("cod") && !lower.includes("location");
+      return (
+        lower.includes("1") || lower.includes("2") || lower.includes("3") || lower.includes("4") ||
+        lower.includes("5") || lower.includes("6") || lower.includes("7") || lower.includes("8") ||
+        lower.includes("red") || lower.includes("yellow") || lower.includes("blue") || lower.includes("white") ||
+        lower.includes("purple") || lower.includes("birthstone") || lower.includes("different") ||
+        lower.includes("රතු") || lower.includes("කහ") || lower.includes("නිල්") || lower.includes("සුදු") ||
+        lower.includes("දම්") || lower.includes("නැකත්") || lower.includes("වෙනත්") ||
+        (!text.includes("?") && !lower.includes("delivery") && !lower.includes("cod") && !lower.includes("location"))
+      );
+    case "GEM_REASON_SELECT":
+    case "JEWELRY_REASON_SELECT":
+    case "DECISION_FORK":
+      return (
+        lower.includes("agent") || lower.includes("photo") || lower.includes("view") ||
+        lower.includes("details") || lower.includes("proceed") || lower === "1" || lower === "2" ||
+        (!text.includes("?") && !lower.includes("delivery") && !lower.includes("cod") && !lower.includes("location"))
+      );
+    case "PHOTO_PREVIEW_CONFIRM":
+      return (
+        lower.includes("agent") || lower.includes("proceed") || lower.includes("confirm") ||
+        lower.includes("change") || lower.includes("වෙනත්") || lower.includes("වෙනස්") ||
+        lower.includes("restart") || lower === "1" || lower === "2"
+      );
     case "GEM_SIZE_SELECT":
       return lower.includes("small") || lower.includes("medium") || lower.includes("large") || lower.includes("ideal") || lower.includes("pendant") || lower.includes("ring") || lower.includes("gift") || lower.includes("1") || lower.includes("2") || lower.includes("3");
     case "JEWELRY_TYPE_SELECT":
@@ -2112,10 +2502,68 @@ export function getResumePromptForStep(state: LeadFlowState, flowConfig?: ChatFl
     case "GEM_COLOR_SELECT":
       return {
         text: getStepMessage(cfg, "gem_color"),
+        poll: {
+          name: "🎨 ඔබ කැමති Gemstone Color එක තෝරන්න:",
+          options: GEM_COLOR_POLL_OPTIONS,
+          multipleAnswers: false,
+        },
       };
     case "JEWELRY_COLOR_SELECT":
       return {
         text: getStepMessage(cfg, "jewelry_color"),
+        poll: {
+          name: "🎨 Jewelry Gemstone Color එක තෝරන්න:",
+          options: GEM_COLOR_POLL_OPTIONS,
+          multipleAnswers: false,
+        },
+      };
+    case "GEM_REASON_SELECT":
+      return {
+        text: getStepMessage(cfg, "gem_reason"),
+        poll: {
+          name: "✨ කැමති නම් විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න:",
+          options: [
+            "👤 Sales Agent සම්බන්ධ කරන්න (Proceed to Agent)",
+            "📸 විස්තර සහ Photos බලන්න (View Details & Photos)",
+          ],
+          multipleAnswers: false,
+        },
+      };
+    case "JEWELRY_REASON_SELECT":
+      return {
+        text: getStepMessage(cfg, "jewelry_reason"),
+        poll: {
+          name: "✨ කැමති නම් විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න:",
+          options: [
+            "👤 Sales Agent සම්බන්ධ කරන්න (Proceed to Agent)",
+            "📸 විස්තර සහ Photos බලන්න (View Details & Photos)",
+          ],
+          multipleAnswers: false,
+        },
+      };
+    case "DECISION_FORK":
+      return {
+        text: getStepMessage(cfg, "decision_fork"),
+        poll: {
+          name: "✨ ඔබ කැමති option එක තෝරන්න:",
+          options: [
+            "👤 Sales Agent සම්බන්ධ කරන්න (Proceed to Agent)",
+            "📸 විස්තර සහ Photos බලන්න (View Details & Photos)",
+          ],
+          multipleAnswers: false,
+        },
+      };
+    case "PHOTO_PREVIEW_CONFIRM":
+      return {
+        text: getStepMessage(cfg, "photo_preview_confirm"),
+        poll: {
+          name: "✨ ඔබ කැමති option එක තෝරන්න:",
+          options: [
+            "👤 Sales Agent සමඟ Order එක Proceed කරන්න (Confirm with Agent)",
+            "🔄 වෙනත් එකක් තෝරන්න (Change / Pick Another)",
+          ],
+          multipleAnswers: false,
+        },
       };
     case "GEM_SIZE_SELECT":
       return {
@@ -2299,8 +2747,18 @@ async function fetchConfiguredRecommendations(
       }
 
       // High priority for color/gemstone match
-      if (cleanColor && cleanColor.length >= 3 && (pName.includes(cleanColor) || pDesc.includes(cleanColor))) {
-        score += 30;
+      const keywords = getColorSearchKeywords(cleanColor);
+      const variationsStr = JSON.stringify(p.variations || []).toLowerCase();
+      const colorMatches = keywords.some(
+        (k) => pName.includes(k) || pDesc.includes(k) || variationsStr.includes(k)
+      );
+      if (colorMatches) {
+        score += 50;
+      }
+
+      // Bonus for products that have real images
+      if (p.images && p.images.length > 0) {
+        score += 20;
       }
 
       // Proximity to budget
@@ -2317,7 +2775,7 @@ async function fetchConfiguredRecommendations(
 
     scored.sort((a, b) => b.score - a.score);
 
-    return scored.slice(0, 2).map((s) => s.product);
+    return scored.slice(0, 3).map((s) => s.product);
   } catch (err) {
     console.error("[FlowController] Catalog query error:", err);
     return [];

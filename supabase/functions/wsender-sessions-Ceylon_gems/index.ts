@@ -143,9 +143,14 @@ serve(async (req) => {
 
     // WAHA session name locked to the user — slug-safe, deterministic, fits within ~25 chars.
     const sessionName = `u_${userId.replace(/-/g, "").substring(0, 20)}`;
-    let override = Deno.env.get("WEBHOOK_URL_OVERRIDE_CEYLON") || Deno.env.get("WEBHOOK_URL_OVERRIDE");
-    if (override && !override.includes("-Ceylon_gems")) {
-      override = override.replace("webhook-wsender", "webhook-wsender-Ceylon_gems");
+    let override = Deno.env.get("WEBHOOK_URL_OVERRIDE_CEYLON");
+    if (!override) {
+      const rawOverride = Deno.env.get("WEBHOOK_URL_OVERRIDE");
+      if (rawOverride && !rawOverride.includes("trycloudflare.com")) {
+        override = rawOverride.includes("-Ceylon_gems")
+          ? rawOverride
+          : rawOverride.replace("webhook-wsender", "webhook-wsender-Ceylon_gems");
+      }
     }
     const webhookUrl = override || `${supabaseUrl}/functions/v1/webhook-wsender-Ceylon_gems`;
 

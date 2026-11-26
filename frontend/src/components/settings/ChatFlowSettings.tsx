@@ -66,28 +66,38 @@ export interface ChatFlowConfig {
 
 export const DEFAULT_FLOW_STEPS: Record<string, { label: string; desc: string; defaultText: string }> = {
   greeting: {
-    label: "Step 1: Welcome Greeting & Category Poll Prompt",
-    desc: "The very first message sent to new customers presenting the gift categories.",
-    defaultText: "ආයුබෝවන්! 💎 Ceylona Gems & Jewelry වෙත සාදරයෙන් පිළිගන්නවා. අපි ඔයාට ලස්සනම gift එකක් තෝරගන්න උදව් කරන්නම්. ✨\n\nඔයා බලන්න කැමති මොන gift option එකද? පහළින් තෝරන්නකෝ 👇",
+    label: "Step 1: Welcome Greeting & Seasonal Offer Prompt",
+    desc: "The very first message sent to new customers presenting the gift categories with seasonal offer announcement.",
+    defaultText: "ආයුබෝවන්! 💎 Ceylona Gems & Jewelry වෙත සාදරයෙන් පිළිගන්නවා. අපේ සුවිශේෂී Seasonal Offer එක මේ දිනවල ක්‍රියාත්මකයි! 🎁 (මේ Offer එක ලබාගත හැක්කේ අපේ Sales Agent හරහා පමණි ✨)\n\nඔයා බලන්න කැමති මොන gift option එකද? පහළින් තෝරන්නකෝ 👇",
   },
   gem_budget: {
-    label: "Step 2: Gemstone Budget Selection Prompt",
-    desc: "Sent when customer chooses Gemstones, right above the budget poll options.",
+    label: "Step 2: Gemstone Budget Selection & Certificate Trust Message",
+    desc: "Sent when customer chooses Gemstones, right above the budget poll options with certificate info.",
     defaultText: "නියමයි! 💎 අපේ හැම gemstone එකකටම රජයේ ලියාපදිංචි Gem Lab Certificate එකක් ඇතුළත් කරලා තියෙන්නේ (LKR 1,500ක සහතිකයක් මිලටම ඇතුළත්). ✨\n\nඔයා බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
   },
   gem_color: {
-    label: "Step 3: Gemstone Color / Type Preference Question",
-    desc: "Asks customer which specific stone or color they prefer (e.g. Blue Sapphire, Amethyst, Emerald).",
-    defaultText: "Budget එක සටහන් කරගත්තා! 💰💎\nඔබ විශේෂයෙන් සොයන Gemstone වර්ගයක් හෝ පාටක් (Color) තියෙනවද? (උදා: Blue Sapphire, Amethyst, Emerald, Aquamarine, etc.)\nනැත්නම් 'ඕනෑම පාටක්' කියලා කියන්නත් පුළුවන් ✨",
+    label: "Step 3: Gemstone Color Selection & Trust Badges",
+    desc: "Color poll prompt with 500+ orders completed & Govt registered gem dealer trust badges.",
+    defaultText: "Budget එක සටහන් කරගත්තා! 💰💎\n🌟 500+ Orders Completed | රජයේ ලියාපදිංචි මැණික් ව්‍යාපාරිකයෙක් (Govt Registered Gem Dealer) 💎\n\nඔබ කැමති Gemstone Color එක පහළින් තෝරන්නකෝ 👇",
+  },
+  gem_reason: {
+    label: "Step 4: Gemstone Purchase Reason Inquiry (with Skip Option)",
+    desc: "Asks customer why they are purchasing / who it is for, with an option to skip directly to agent or view photos.",
+    defaultText: "හොඳයි! 💎 මේ gift එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) හෝ විශේෂ හේතුවක් තියෙනවද? 🎁\n(අපේ Sales Specialist ට හොඳම recommendations ලබාදෙන්න මේ විස්තර උදව් වේවි ✨)\n\nකැමති නම් කෙටි විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න 👇",
+  },
+  gem_authenticity: {
+    label: "Step 5: Online Authenticity & Certificate Verification Message",
+    desc: "Explains how the customer can verify certificate authenticity online via QR code / Certificate number.",
+    defaultText: "🔍 ඔබ තෝරාගන්නා සෑම Gemstone එකක් සඳහාම ලබාදෙන Gem Lab Certificate එකෙහි QR code එක හෝ Certificate Number එක මඟින් Online සත්‍යාපනය (Verify Authenticity) කරගත හැක! ✨",
   },
   gem_size: {
-    label: "Step 4: Gemstone Size Selection Prompt",
-    desc: "Asks customer to pick between Small (Small Gift), Medium (Ideal Gift or Ring), or Large (Gift / Pendant) size.",
+    label: "Legacy: Gemstone Size Selection Prompt",
+    desc: "Optional legacy step for gemstone size inquiry.",
     defaultText: "නියමයි! 💎 ඔයා බලාපොරොත්තු වෙන Gemstone Size එක පහළින් තෝරන්නකෝ 👇",
   },
   gem_recipient_date: {
-    label: "Step 5: Gemstone Gift Recipient & Needed Date",
-    desc: "Asks who the gift is for and what the target delivery date is.",
+    label: "Legacy: Gemstone Gift Recipient & Needed Date",
+    desc: "Optional legacy step asking for recipient and needed date.",
     defaultText: "හොඳයි! 💎 මේ gift එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) සහ මේක ඔබට කවදා වන විටද අවශ්‍ය වෙන්නේ? 🎁📅",
   },
   jewelry_type: {
@@ -98,21 +108,26 @@ export const DEFAULT_FLOW_STEPS: Record<string, { label: string; desc: string; d
   ring_size: {
     label: "Step 7: Ring Size Inquiry Prompt",
     desc: "Asks customer for their ring size or lets them know adjustable options exist.",
-    defaultText: "Solid 925 Silver Rings! 💍✨ ඔයාගෙ Ring Size එක දන්නවද? (උදා: US 6, 7, 8 හෝ 'දන්නේ නෑ' කියලා කියන්න පුළුවන්) ✨",
-  },
-  jewelry_color: {
-    label: "Step 8: Jewelry Gemstone & Color Preference Question",
-    desc: "Asks customer for their preferred gemstone color to embed into the silver piece.",
-    defaultText: "නියමයි! 💍 Jewelry එකට ඔබ කැමති Gemstone එකක් හෝ Color එකක් තියෙනවද? 💎 (උදා: Blue Sapphire, Emerald, Amethyst, etc.)",
+    defaultText: "Solid 925 Silver Rings! 💍✨ ඔයාගෙ Ring Size එක දන්නවද? (උදා: US 6, 7, 8 හෝ 'දන්නේ නෑ' කියලා කියන්න පුළුවන්, අපේ standard rings adjustable වේ) ✨",
   },
   jewelry_budget: {
-    label: "Step 9: Silver Jewelry Budget Selection Prompt",
-    desc: "Sent above the budget poll options for silver rings and pendants.",
-    defaultText: "Silver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+    label: "Step 8: Silver Jewelry Budget Selection & 925 Hallmark Message",
+    desc: "Sent above the budget poll options for silver jewelry with hallmark & certificate trust.",
+    defaultText: "නියමයි! 💍 අපේ හැම silver jewelry piece එකක් සඳහාම 925 Hallmark සහ Gem Lab Certificate සහතිකයක් ඇතුළත් වේ. ✨\n\nSilver Jewelry සඳහා ඔබ බලාපොරොත්තු වෙන Budget Range එක පහළින් තෝරන්නකෝ 👇",
+  },
+  jewelry_color: {
+    label: "Step 9: Silver Jewelry Gemstone Color Selection & Trust Badges",
+    desc: "Asks customer for their preferred gemstone color with trust badges.",
+    defaultText: "Budget එක සටහන් කරගත්තා! 💰💍\n🌟 500+ Orders Completed | රජයේ ලියාපදිංචි මැණික් ව්‍යාපාරිකයෙක් (Govt Registered Gem Dealer) 💎\n\nJewelry එකට ඔබ කැමති Gemstone Color එක පහළින් තෝරන්නකෝ 👇",
+  },
+  jewelry_reason: {
+    label: "Step 10: Silver Jewelry Purchase Reason Inquiry",
+    desc: "Asks who the jewelry is for and occasion with skip option.",
+    defaultText: "හොඳයි! 💍 මේ jewelry එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) හෝ විශේෂ හේතුවක් තියෙනවද? 🎁\n(අපේ Sales Specialist ට හොඳම recommendations ලබාදෙන්න මේ විස්තර උදව් වේවි ✨)\n\nකැමති නම් කෙටි විස්තරයක් type කරන්න, නැතිනම් පහළින් තෝරන්න 👇",
   },
   jewelry_recipient_date: {
-    label: "Step 10: Silver Jewelry Recipient & Needed Date",
-    desc: "Asks who the jewelry is for and when it needs to be delivered.",
+    label: "Legacy: Silver Jewelry Recipient & Needed Date",
+    desc: "Optional legacy step for recipient and date inquiry.",
     defaultText: "හොඳයි! 💍 මේ gift එක කාටද දෙන්න බලාපොරොත්තු වෙන්නේ? (උදා: Birthday, Anniversary, Yourself) සහ මේක ඔබට කවදා වන විටද අවශ්‍ය වෙන්නේ? 🎁📅",
   },
   silver_disclaimer: {
@@ -130,18 +145,28 @@ export const DEFAULT_FLOW_STEPS: Record<string, { label: string; desc: string; d
     desc: "Sent when customer chooses 'Custom Design Piece' asking for reference photos.",
     defaultText: "Custom Goldsmithing & Bespoke Design! 💎 අපේ master jeweler ඔබ කැමති ඕනෑම design එකක් Solid 925 Silver වලින් සකස් කරලා දෙන්න සූදානම්. ඔයා ළඟ තියෙන photo එකක් හෝ reference design එකක් මේ chat එකට එවන්න පුළුවන්ද? අපේ designer කෙනෙක් ඉක්මනින්ම සම්බන්ධ වෙයි! ✨",
   },
+  decision_fork: {
+    label: "Step 14: Decision Fork Prompt (Agent vs View Photos)",
+    desc: "Prompt inviting the customer to connect to an agent or view sample photos.",
+    defaultText: "ඔබ කැමති option එක පහළින් තෝරන්න: 👇",
+  },
+  photo_preview_confirm: {
+    label: "Step 15: Photo Preview & Final Confirmation Prompt",
+    desc: "Message shown below the recommended product sample photo and authenticity guarantee.",
+    defaultText: "මේ විස්තර සහ Photos බලලා ඔබ තෘප්තිමත්ද? අපේ Sales Specialist කෙනෙක් සමඟ Order එක confirm කරගැනීමට පහළින් තෝරන්න: 👇",
+  },
   confirmation: {
-    label: "Step 14: Final Order Summary & Confirmation Question",
+    label: "Step 16: Order Summary & Confirmation Question",
     desc: "Prompt placed at the bottom of the order summary asking customer to confirm.",
     defaultText: "මේ විස්තර ඔක්කොම හරිද? Order එක confirm කරලා proceed කරන්නද? ✨",
   },
   agent_handoff: {
-    label: "Step 15: Sales Consultant Handoff Closing Message",
+    label: "Step 17: Sales Consultant Handoff Closing Message",
     desc: "Final message sent to customer when order is confirmed informing that an agent will take over.",
     defaultText: "බොහොම ස්තූතියි! 💎 ඔයාගෙ requirements ඔක්කොම මම සටහන් කරගත්තා. අපේ sales specialist කෙනෙක් details confirm කරගන්න ඉක්මනින්ම මේ chat එකෙන්ම ඔයාව සම්බන්ධ කරගනීවි. ✨",
   },
   restart_flow: {
-    label: "Step 16: Restart / Change Category Prompt",
+    label: "Step 18: Restart / Change Category Prompt",
     desc: "Prompt sent when customer taps 'Change' to pick categories from scratch.",
     defaultText: "කිසි ප්‍රශ්නයක් නෑ! 🔄 අපි නැවත මුල සිට තෝරාගනිමු. ඔයා කැමති category එක පහළින් තෝරන්නකෝ 👇",
   },
@@ -393,20 +418,34 @@ export default function ChatFlowSettings() {
   const stepGroups = [
     {
       groupTitle: "🌟 General Flow & Handoff Messages",
-      steps: ["greeting", "confirmation", "agent_handoff", "restart_flow"],
+      steps: [
+        "greeting",
+        "decision_fork",
+        "photo_preview_confirm",
+        "confirmation",
+        "agent_handoff",
+        "restart_flow",
+      ],
     },
     {
       groupTitle: "💎 Gemstones Journey Steps",
-      steps: ["gem_budget", "gem_color", "gem_size", "gem_recipient_date"],
+      steps: [
+        "gem_budget",
+        "gem_color",
+        "gem_reason",
+        "gem_authenticity",
+        "gem_size",
+        "gem_recipient_date",
+      ],
     },
     {
       groupTitle: "💍 Silver Jewelry Journey Steps",
       steps: [
         "jewelry_type",
         "ring_size",
-        "jewelry_color",
         "jewelry_budget",
-        "jewelry_recipient_date",
+        "jewelry_color",
+        "jewelry_reason",
         "silver_disclaimer",
         "custom_design",
       ],
